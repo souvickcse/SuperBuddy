@@ -68,10 +68,22 @@ final class Battle {
             // the buddy answers with fists up close, webs from a distance, and
             // closes the gap in between instead of plinking from range
             buddyCooldown -= dt
-            if buddyCooldown <= 0, buddy.currentState != .fall {
+            if buddyCooldown <= 0, buddy.currentState != .fall, buddy.currentState != .grabbed {
                 let dx = abs(v.pos.x - buddy.pos.x)
                 let overhead = v.pos.y - buddy.pos.y > 70
-                if !overhead, dx < 128 {
+                if buddy.character == .deadpool {
+                    if buddy.grounded, buddy.currentState != .punch, buddy.currentState != .pistolShot {
+                        if !overhead, dx < 128 {
+                            buddy.punchAt(v.pos, scene: scene)
+                            registerHit(on: v, from: buddy.pos, world: world, scene: scene, buddy: buddy)
+                            buddyCooldown = 0.8
+                        } else {
+                            buddy.pistolShot(at: v.pos, scene: scene)
+                            registerHit(on: v, from: buddy.pos, world: world, scene: scene, buddy: buddy)
+                            buddyCooldown = 1.1
+                        }
+                    }
+                } else if !overhead, dx < 128 {
                     // in close: fists
                     buddyCooldown = Double(randf(0.78, 1.30))
                     buddy.punchAt(v.pos, scene: scene)
@@ -115,13 +127,13 @@ final class Battle {
 
     private func registerHit(on v: Villain, from point: CGPoint, world: World,
                              scene: SKScene, buddy: Buddy) {
-        let isWeb = abs(v.pos.x - point.x) >= 96
+        let isWeb = buddy.character == .spider && buddy.currentState == .webBlast
         let finished = v.takeHit(from: point, scene: scene, webbed: isWeb)
         if isWeb {
             FX.webSplat(at: CGPoint(x: v.pos.x, y: v.pos.y + v.reach * 0.5), in: scene)
             FX.text("THWIP!", at: point + CGPoint(x: 0, y: buddy.reach + 14), in: scene)
         } else {
-            FX.text("BAM!", at: CGPoint(x: (point.x + v.pos.x) / 2, y: v.pos.y + v.reach * 0.8), in: scene)
+            FX.text(buddy.character == .deadpool ? (buddy.currentState == .punch ? "SLASH!" : "PEW!") : "BAM!", at: CGPoint(x: (point.x + v.pos.x) / 2, y: v.pos.y + v.reach * 0.8), in: scene)
         }
         if finished {
             phase = .victorious
@@ -135,7 +147,7 @@ final class Battle {
     @discardableResult
     func summon(world: World, scene: SKScene, buddy: Buddy, skin forced: Skin? = nil) -> Bool {
         guard phase == .idle else { return false }
-        let skin = forced ?? Skin.randomVillain()
+        let skin = forced ?? Skin.randomVillain(for: buddy.character)
         lastOpponent = skin.name
         let v = Villain(skin: skin)
         v.spawn(world: world, near: buddy.pos.x, fromLeft: chance(0.5), scale: buddy.scale)

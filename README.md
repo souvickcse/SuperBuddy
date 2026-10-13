@@ -1,6 +1,17 @@
 # Spider Buddy 🕷️
 
-A tiny web-slinging superhero who lives on your Mac desktop.
+A tiny superhero who lives on your Mac desktop.
+
+Use **Choose Buddy → Spider Buddy / Deadpool** in the spider menu to switch characters.
+Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
+Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
+the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
+utility belt and twin katana scabbards, with a swaggering walk, cheeky idle pose and
+his own goofy dance. Deadpool stays on the floor, does somersault jumps and knee-rub landings, and fights
+with a drawn katana up close or cartoon pistol shots at range. He does not shoot webs,
+swing, cling to walls or hang from the ceiling; those menu commands are hidden for him. Use **Katana slash** or **Fire pistol**
+in the menu to trigger his weapon animations while he is standing on the floor.
+He also occasionally pauses mid-walk for a katana flourish, then resumes walking.
 
 He walks along the edges of your screen, crawls up the walls and across the ceiling,
 jumps, shoots webs and swings around, dangles from the ceiling and finishes every

@@ -26,6 +26,101 @@ enum Motion {
         return p
     }
 
+    static func deadpoolIdle(_ t: CGFloat) -> Pose {
+        var p = idle(t)
+        p.head = -0.16 + 0.12 * sin(t * 1.4)
+        p.armNear = 0.55
+        p.foreNear = 1.8
+        p.armFar = -0.45
+        p.foreFar = 1.4
+        return p
+    }
+
+    static func deadpoolWalk(_ t: CGFloat) -> Pose {
+        var p = walk(t)
+        p.torso = -0.06 + 0.08 * sin(t * 4.2)
+        p.head = 0.10 - 0.08 * sin(t * 4.2)
+        p.foreNear += 0.35
+        p.hip.x = 0.8 * sin(t * 4.2)
+        return p
+    }
+
+    static func deadpoolDance(_ t: CGFloat) -> Pose {
+        var p = dance(t)
+        p.head += 0.18 * sin(t * 10)
+        p.torso += 0.12 * sin(t * 6)
+        p.armNear = 1.5 + 0.6 * sin(t * 7)
+        p.foreNear = 1.4
+        p.armFar = -1.5 - 0.6 * sin(t * 7)
+        p.foreFar = -1.4
+        return p
+    }
+
+    static func deadpoolAir(_ t: CGFloat) -> Pose {
+        var p = Pose()
+        p.thighNear = 1.25
+        p.thighFar = 0.9
+        p.shinNear = -1.8
+        p.shinFar = -1.6
+        p.armNear = 2.2 + 0.15 * sin(t * 8)
+        p.armFar = -1.3
+        p.foreNear = 1.1
+        p.foreFar = 1.4
+        p.head = -0.2
+        return p
+    }
+
+    static let katanaDuration: TimeInterval = 1.6
+    static let pistolDuration: TimeInterval = 1.8
+
+    static func deadpoolSlash(_ t: CGFloat) -> Pose {
+        var draw = deadpoolIdle(0)
+        draw.armNear = 2.8; draw.foreNear = 1.1; draw.head = -0.3
+        var wind = draw
+        wind.armNear = 3.1; wind.foreNear = 0.2; wind.torso = -0.3
+        wind.thighNear = 0.5; wind.shinNear = -0.7
+        var cut = wind
+        cut.armNear = 0.8; cut.foreNear = 0.1; cut.torso = 0.55
+        cut.hip = CGPoint(x: 5, y: -4); cut.head = -0.2
+        var reverse = cut
+        reverse.armNear = -1.8; reverse.foreNear = -0.3
+        reverse.torso = -0.25; reverse.hip.x = -2
+        var flourish = draw
+        flourish.armNear = 2.2; flourish.foreNear = -1.1
+        return Pose.timeline([draw, wind, cut, reverse, flourish, deadpoolIdle(0)], t)
+    }
+
+    static func deadpoolShoot(_ t: CGFloat) -> Pose {
+        var draw = deadpoolIdle(0)
+        draw.armNear = 0.1; draw.foreNear = 1.0
+        var aim = draw
+        aim.armNear = 1.55; aim.foreNear = 0.05
+        aim.armFar = 1.1; aim.foreFar = 0.5
+        aim.torso = 0.1; aim.head = -0.12
+        aim.thighNear = 0.45; aim.shinNear = -0.5
+        var recoil = aim
+        recoil.armNear = 1.85; recoil.foreNear = 0.45
+        recoil.torso = -0.2; recoil.hip.x = -2
+        var inspect = draw
+        inspect.armNear = 1.0; inspect.foreNear = 1.7; inspect.head = 0.3
+        return Pose.timeline([draw, aim, recoil, aim, recoil, aim, inspect, draw], t)
+    }
+
+    static func deadpoolLanding(_ t: CGFloat) -> Pose {
+        if t < 0.35 { return heroLanding(t) }
+        var p = idle(0)
+        p.hip.y = -4
+        p.torso = 0.5
+        p.head = 0.25
+        p.thighNear = 0.7
+        p.shinNear = -0.85
+        p.armNear = 0.3
+        p.foreNear = 0.8 + 0.18 * sin(t * 22)
+        p.armFar = -0.6
+        p.foreFar = 1.1
+        return p
+    }
+
     // MARK: Locomotion
 
     static func walk(_ t: CGFloat, speed: CGFloat = 1) -> Pose {

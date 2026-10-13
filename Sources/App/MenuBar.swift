@@ -6,9 +6,10 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var mainMenu: NSMenu?
     private var displayMenu: NSMenu?
+    private var characterMenu: NSMenu?
 
     private enum Tag: Int {
-        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain
+        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol
         case sizeSmall = 100, sizeMedium, sizeLarge
     }
 
@@ -28,6 +29,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Come to my cursor", .come, "c"))
         menu.addItem(make("Dance!", .dance, "d"))
         menu.addItem(make("Jump", .jump, "j"))
+        menu.addItem(make("Katana slash", .katana, "k"))
+        menu.addItem(make("Fire pistol", .pistol, "f"))
         menu.addItem(make("Shoot a web & swing", .swing, "s"))
         menu.addItem(make("Go hang from the ceiling", .hang, "h"))
         menu.addItem(make("Web-zip to the ceiling", .zipUp, "u"))
@@ -36,6 +39,18 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(.separator())
         menu.addItem(make("Summon a villain!", .villain, "v"))
         menu.addItem(.separator())
+
+        let characterItem = NSMenuItem(title: "Choose Buddy", action: nil, keyEquivalent: "")
+        let characters = NSMenu()
+        for character in BuddyCharacter.allCases {
+            let choice = NSMenuItem(title: character.title, action: #selector(chooseCharacter(_:)), keyEquivalent: "")
+            choice.target = self
+            choice.representedObject = character.rawValue
+            characters.addItem(choice)
+        }
+        characterItem.submenu = characters
+        characterMenu = characters
+        menu.addItem(characterItem)
 
         let sizeItem = NSMenuItem(title: "Buddy size", action: nil, keyEquivalent: "")
         let sizeMenu = NSMenu()
@@ -66,7 +81,19 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         guard menu === mainMenu else { return }
+        let isDeadpool = BuddyCenter.shared.scene?.buddy.character == .deadpool
+        for item in mainMenu?.items ?? [] {
+            if [Tag.swing, .hang, .zipUp, .zipSide, .restUpsideDown].map({ $0.rawValue }).contains(item.tag) {
+                item.isHidden = isDeadpool
+            }
+            if [Tag.katana, .pistol].map({ $0.rawValue }).contains(item.tag) {
+                item.isHidden = !isDeadpool
+            }
+        }
         rebuildDisplayMenu()
+        for item in characterMenu?.items ?? [] {
+            item.state = (item.representedObject as? String) == BuddyCenter.shared.scene?.buddy.character.rawValue ? .on : .off
+        }
     }
 
     private func rebuildDisplayMenu() {
@@ -80,6 +107,12 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             item.state = name == current ? .on : .off
             sub.addItem(item)
         }
+    }
+
+    @objc private func chooseCharacter(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+              let character = BuddyCharacter(rawValue: id) else { return }
+        BuddyCenter.shared.scene?.selectCharacter(character)
     }
 
     @objc private func chooseDisplay(_ sender: NSMenuItem) {
@@ -113,6 +146,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .zipSide: BuddyCenter.shared.zipSide()
         case .restUpsideDown: BuddyCenter.shared.restUpsideDown()
         case .villain: BuddyCenter.shared.summonVillain()
+        case .katana: BuddyCenter.shared.scene?.commandKatana()
+        case .pistol: BuddyCenter.shared.scene?.commandPistol()
         case .pause: BuddyCenter.shared.togglePause()
         case .reset: BuddyCenter.shared.reset()
         case .sizeSmall: BuddyCenter.shared.setScale(0.62)

@@ -23,7 +23,12 @@ struct Shot {
     var skin: Skin = Skin()         // costume
 }
 
-let shots: [Shot] = [
+let shots: [Shot] = Skin.deadpoolVillains.map { Shot(name: $0.name, pose: Motion.idle(0.4), skin: $0) } + [
+    Shot(name: "Deadpool - idle", pose: Motion.deadpoolIdle(0.4), skin: .deadpool),
+    Shot(name: "Deadpool - swagger", pose: Motion.deadpoolWalk(0.34), skin: .deadpool),
+    Shot(name: "Deadpool - dance", pose: Motion.deadpoolDance(0.8), skin: .deadpool),
+    Shot(name: "Deadpool - slash", pose: Motion.deadpoolSlash(0.4), skin: .deadpool),
+    Shot(name: "Deadpool - pistol", pose: Motion.deadpoolShoot(0.3), skin: .deadpool),
     Shot(name: "idle", pose: Motion.idle(0.4)),
     Shot(name: "walk", pose: Motion.walk(0.34)),
     Shot(name: "walk - facing left", pose: Motion.walk(0.34), facing: -1),
@@ -202,6 +207,7 @@ struct PreviewTool {
             rig.scale = rigScale
             rig.facing = shot.facing
             rig.apply(shot.pose)
+            rig.showWeapons(sword: shot.name == "Deadpool - slash", pistol: shot.name == "Deadpool - pistol")
             rig.blink = shot.blink
             rig.root.position = base
             rig.root.zRotation = shot.tilt

@@ -171,4 +171,29 @@ enum FX {
             .removeFromParent()
         ]))
     }
+    static func swordArc(at p: CGPoint, facing: CGFloat, in scene: SKScene) {
+        let path = CGMutablePath()
+        path.addArc(center: .zero, radius: 27, startAngle: -1.1, endAngle: 1.1, clockwise: false)
+        let arc = SKShapeNode(path: path)
+        arc.position = p; arc.xScale = facing
+        arc.strokeColor = SKColor(white: 0.95, alpha: 0.9)
+        arc.lineWidth = 3; arc.zPosition = 110
+        scene.addChild(arc)
+        arc.run(.sequence([.group([.scale(to: 1.3, duration: 0.18), .fadeOut(withDuration: 0.18)]), .removeFromParent()]))
+    }
+
+    static func pistolFlash(at p: CGPoint, facing: CGFloat, in scene: SKScene) {
+        let flash = SKShapeNode(circleOfRadius: 5)
+        flash.position = p + CGPoint(x: facing * 7, y: 0)
+        flash.fillColor = SKColor(srgbRed: 1, green: 0.8, blue: 0.2, alpha: 1)
+        flash.strokeColor = .white; flash.zPosition = 110
+        scene.addChild(flash)
+        flash.run(.sequence([.fadeOut(withDuration: 0.1), .removeFromParent()]))
+        let streak = SKShapeNode(rectOf: CGSize(width: 15, height: 1.5))
+        streak.position = flash.position
+        streak.fillColor = flash.fillColor; streak.strokeColor = .clear; streak.zPosition = 109
+        scene.addChild(streak)
+        streak.run(.sequence([.group([.moveBy(x: facing * 90, y: 0, duration: 0.18), .fadeOut(withDuration: 0.18)]), .removeFromParent()]))
+    }
+
 }

@@ -93,6 +93,23 @@ final class BuddyScene: SKScene {
 
     // MARK: Commands (menu bar)
 
+    func selectCharacter(_ character: BuddyCharacter) {
+        buddy.selectCharacter(character)
+        UserDefaults.standard.set(character.rawValue, forKey: "buddyCharacter")
+    }
+
+    func commandKatana() {
+        guard buddy.character == .deadpool, buddy.grounded,
+              buddy.currentState != .grabbed, !frozen else { return }
+        buddy.punchAt(buddy.pos + CGPoint(x: buddy.facing * 100, y: 0), scene: self)
+    }
+
+    func commandPistol() {
+        guard buddy.character == .deadpool, buddy.grounded,
+              buddy.currentState != .grabbed, !frozen else { return }
+        buddy.pistolShot(at: buddy.pos + CGPoint(x: buddy.facing * 240, y: 0), scene: self)
+    }
+
     func commandDance() { buddy.dance(self) }
 
     func commandJump() {
@@ -154,6 +171,8 @@ final class BuddyScene: SKScene {
     var userScale: CGFloat = 0.9
 
     func loadPreferences() {
+        let character = BuddyCharacter(rawValue: UserDefaults.standard.string(forKey: "buddyCharacter") ?? "") ?? .spider
+        buddy.selectCharacter(character)
         let stored = UserDefaults.standard.object(forKey: "buddyScale") as? Double
         let s = CGFloat(stored ?? 0.9)
         userScale = clampf(s, 0.4, 2.0)

@@ -6,7 +6,7 @@ import SpriteKit
 final class Buddy {
 
     enum State: Equatable {
-        case stand, walk, run, jump, fall, swing, hang, zip, webBlast, punch, grabbed, dance, heroLand, recover
+        case stand, walk, run, jump, fall, swing, hang, zip, webBlast, pistolShot, punch, grabbed, dance, heroLand, recover
 
         var isAirborne: Bool { self == .jump || self == .fall || self == .swing || self == .hang || self == .zip }
     }
@@ -23,7 +23,34 @@ final class Buddy {
 
     // MARK: Rig + simulation
 
-    let rig = Rig()
+    private(set) var rig = Rig()
+    private(set) var character: BuddyCharacter = .spider
+
+    /// Replace the artwork without disturbing physics, the rope, or an active battle.
+    func selectCharacter(_ character: BuddyCharacter) {
+        guard self.character != character else { return }
+        let old = rig
+        let parent = old.root.parent
+        let replacement = Rig(skin: character.skin)
+        replacement.scale = scale
+        replacement.facing = old.facing
+        replacement.blink = old.blink
+        replacement.apply(currentPose)
+        replacement.root.position = old.root.position
+        replacement.root.zRotation = old.root.zRotation
+        old.root.removeFromParent()
+        parent?.addChild(replacement.root)
+        rig = replacement
+        self.character = character
+        webShotPending = false
+        if character == .deadpool, state.isAirborne || surface != .floor || state == .webBlast {
+            surface = .floor
+            up = CGPoint(x: 0, y: 1)
+            grounded = false
+            vel = CGPoint(x: 0, y: -120)
+            enter(.fall)
+        }
+    }
     private(set) var state: State = .stand
     /// True while the pose being played is a crawl stance (never upright on a wall).
     private(set) var crawlingNow = false
@@ -34,6 +61,9 @@ final class Buddy {
     private(set) var grounded = true
     var facing: CGFloat = 1
 
+    private var weaponEffectIndex = 0
+    private var walkingSlashIn: TimeInterval = Double(randf(6, 14))
+    private var resumeWalkAfterSlash = false
     private var stateTime: TimeInterval = 0
     private var stateDuration: TimeInterval = 1
     private var animTime: TimeInterval = 0
@@ -130,6 +160,8 @@ final class Buddy {
         let target = targetPose()
         currentPose = Pose.blend(currentPose, target, blendRate(dt, paused ? 4 : 16))
         rig.apply(currentPose)
+        rig.showWeapons(sword: character == .deadpool && state == .punch,
+                        pistol: character == .deadpool && state == .pistolShot)
         rig.look(at: cursor)
 
         let jitter = shakeMag > 0.05
@@ -152,6 +184,11 @@ final class Buddy {
     }
 
     private func updateWeb(dt: TimeInterval, web: WebLine, scene: SKScene) {
+        guard character == .spider else {
+            webShotPending = false
+            if web.phase != .idle { web.release() }
+            return
+        }
         let gripping = (state == .hang && hangInverted) ? rig.nearFootWorld : rig.nearHandWorld
         if webShotPending {
             webShotPending = false
@@ -169,8 +206,10 @@ final class Buddy {
     // MARK: State machine
 
     func enter(_ s: State) {
+        if s != .punch && s != .walk { resumeWalkAfterSlash = false }
         state = s
         stateTime = 0
+        weaponEffectIndex = 0
         switch s {
         case .stand:
             // a proper wait: he stops, looks around and breathes for a few seconds
@@ -185,7 +224,8 @@ final class Buddy {
         case .hang: stateDuration = Double(randf(hangInverted ? 2.4 : 1.5, hangInverted ? 4.6 : 2.9))
         case .zip: stateDuration = 2.0
         case .webBlast: stateDuration = 0.52
-        case .punch: stateDuration = 0.50
+        case .pistolShot: stateDuration = Motion.pistolDuration
+        case .punch: stateDuration = character == .deadpool ? Motion.katanaDuration : 0.50
         case .swing: stateDuration = Double(randf(1.6, 2.6))
         case .heroLand: stateDuration = 0.9
         case .recover: stateDuration = 0.45
@@ -209,8 +249,27 @@ final class Buddy {
             stepZip(dt, world, scene)
         case .grabbed:
             break
-        case .webBlast, .punch:
-            if stateTime > stateDuration { enter(.stand) }
+        case .webBlast, .pistolShot, .punch:
+            if character == .deadpool, !paused {
+                let cues: [Double] = state == .pistolShot ? [0.48, 1.0] : [0.52, 0.9]
+                while weaponEffectIndex < cues.count, stateTime >= cues[weaponEffectIndex] {
+                    if state == .pistolShot {
+                        FX.pistolFlash(at: rig.nearHandWorld ?? pos, facing: facing, in: scene)
+                    } else if state == .punch {
+                        FX.swordArc(at: pos + CGPoint(x: facing * 15, y: 20), facing: facing, in: scene)
+                    }
+                    weaponEffectIndex += 1
+                }
+            }
+            if stateTime > stateDuration {
+                if state == .punch && resumeWalkAfterSlash && !inBattle {
+                    resumeWalkAfterSlash = false
+                    enter(.walk)
+                } else {
+                    resumeWalkAfterSlash = false
+                    enter(.stand)
+                }
+            }
         case .dance:
             if stateTime > stateDuration { enter(.stand) }
         case .heroLand:
@@ -223,6 +282,15 @@ final class Buddy {
     // MARK: Grounded locomotion (walks along whichever edge it is standing on)
 
     private func stepGrounded(_ dt: CGFloat, _ world: World, _ scene: SKScene) {
+        if character == .deadpool, state == .walk, !inBattle, !pressing {
+            walkingSlashIn -= TimeInterval(dt)
+            if walkingSlashIn <= 0 {
+                walkingSlashIn = Double(randf(6, 14))
+                resumeWalkAfterSlash = true
+                enter(.punch)
+                return
+            }
+        }
         // crawling up a wall is a long trip, so he covers ground a little quicker there
         let climbing = (surface == .left || surface == .right || surface == .ceiling)
         let base = state == .run ? runSpeed : (climbing ? walkSpeed * 1.55 : walkSpeed)
@@ -237,7 +305,10 @@ final class Buddy {
             facing = -facing
         }
 
-        if let next = world.cornerTransition(pos, from: surface) {
+        if character == .deadpool, world.cornerTransition(pos, from: .floor) != nil {
+            facing = -facing
+        }
+        if character == .spider, let next = world.cornerTransition(pos, from: surface) {
             surface = next
             up = world.up(for: next)
             FX.dust(at: world.contactPoint(for: pos, on: next), in: scene, count: 3, power: 0.35)
@@ -266,6 +337,10 @@ final class Buddy {
         vel.x *= (1 - 0.30 * dt)
         pos = pos + vel * dt
         pos.x = clampf(pos.x, world.leftX + 5, world.rightX - 5)
+        if character == .deadpool, pos.y > world.ceilY - reach {
+            pos.y = world.ceilY - reach
+            vel.y = Swift.min(0, vel.y)
+        }
         if state == .jump && vel.y <= 0 { enter(.fall) }
         if tryLand(world, scene: scene) { return }
         // safety net: never leave the desktop
@@ -277,9 +352,9 @@ final class Buddy {
         let r = world.reach
         var hit: World.Surface?
         if pos.y - world.floorY <= r { hit = .floor }
-        else if world.ceilY - pos.y <= r { hit = .ceiling }
-        else if pos.x - world.leftX <= r { hit = .left }
-        else if world.rightX - pos.x <= r { hit = .right }
+        else if character == .spider, world.ceilY - pos.y <= r { hit = .ceiling }
+        else if character == .spider, pos.x - world.leftX <= r { hit = .left }
+        else if character == .spider, world.rightX - pos.x <= r { hit = .right }
         guard let s = hit else { return false }
         let impact = vel.length
         land(on: s, world: world, scene: scene, impact: impact)
@@ -413,6 +488,15 @@ final class Buddy {
 
     private func decide(_ world: World, _ scene: SKScene) {
         guard !paused, !isGrabbed, !inBattle else { return }
+        if character == .deadpool {
+            let roll = randf(0, 1)
+            if roll < 0.28 { enter(.walk) }
+            else if roll < 0.40 { enter(.run) }
+            else if roll < 0.55 { jump(world) }
+            else if roll < 0.70 { dance(scene) }
+            else { enter(.stand) }
+            return
+        }
         let r = Double.random(in: 0..<1)
         if surface == .floor {
             if r < 0.20 { enter(.walk) }
@@ -450,6 +534,13 @@ final class Buddy {
 
     func jump(_ world: World) {
         let t = world.tangent(for: surface)
+        if character == .deadpool {
+            vel = CGPoint(x: facing * randf(180, 320), y: jumpSpeed * 0.78)
+            grounded = false
+            forceHeroLand = true
+            enter(.jump)
+            return
+        }
         vel = world.up(for: surface) * randf(jumpSpeed * 0.78, jumpSpeed) + t * (facing * randf(10, 170))
         grounded = false
         forceHeroLand = false
@@ -457,6 +548,7 @@ final class Buddy {
     }
 
     func swing(_ world: World, _ scene: SKScene, toward target: CGPoint? = nil) {
+        guard character == .spider else { return }
         let tx = target?.x ?? (pos.x + facing * randf(90, 300))
         var a = CGPoint(x: clampf(tx, world.leftX + 26, world.rightX - 26), y: world.ceilY - 3)
         if a.distance(to: pos) < 90 {
@@ -484,6 +576,7 @@ final class Buddy {
     }
 
     func hangFromWeb(_ world: World, _ scene: SKScene) {
+        guard character == .spider else { return }
         // dangling only reads well with the web above you and space below
         guard surface != .floor else {
             swing(world, scene)
@@ -511,6 +604,7 @@ final class Buddy {
     /// Resting on the ceiling: a short thread catches him by the ankle and he hangs
     /// head-down just below it.
     func hangUpsideDown(_ world: World, _ scene: SKScene) {
+        guard character == .spider else { return }
         let a = CGPoint(x: clampf(pos.x + randf(-40, 40), world.leftX + 30, world.rightX - 30),
                         y: world.ceilY - 2)
         anchor = a
@@ -529,6 +623,7 @@ final class Buddy {
     /// Shoot a line at the ceiling (or the nearest wall) and get pulled straight
     /// there, arriving in a crawl stance.
     func webZip(_ world: World, _ scene: SKScene, toCeiling: Bool? = nil) {
+        guard character == .spider else { return }
         let goUp = toCeiling ?? chance(0.62)
         let target: CGPoint
         let attach: CGPoint
@@ -605,11 +700,11 @@ final class Buddy {
 
         switch state {
         case .stand:
-            if onFloor { return Motion.idle(t) }
+            if onFloor { return character == .deadpool ? Motion.deadpoolIdle(t) : Motion.idle(t) }
             crawlingNow = true
             return Motion.crawlRest(t)
         case .walk:
-            if onFloor { return Motion.walk(t, speed: 1) }
+            if onFloor { return character == .deadpool ? Motion.deadpoolWalk(t) : Motion.walk(t, speed: 1) }
             crawlingNow = true
             return Motion.crawl(t, speed: 1)
         case .run:
@@ -617,7 +712,7 @@ final class Buddy {
             crawlingNow = true
             return Motion.crawl(t, speed: 1.45)
         case .jump, .fall:
-            return Motion.air(t, vertical: vel.y)
+            return character == .deadpool ? Motion.deadpoolAir(t) : Motion.air(t, vertical: vel.y)
         case .swing:
             return stateTime < 0.14 ? Motion.shootWeb(CGFloat(stateTime)) : Motion.swing(t, speed: vel.length / 420)
         case .hang:
@@ -626,16 +721,19 @@ final class Buddy {
             return Motion.webZip(t)
         case .webBlast:
             return Motion.shootWeb(Swift.min(CGFloat(stateTime), 0.22))
+        case .pistolShot:
+            return Motion.deadpoolShoot(CGFloat(stateTime / Motion.pistolDuration))
         case .punch:
+            if character == .deadpool { return Motion.deadpoolSlash(CGFloat(stateTime / Motion.katanaDuration)) }
             return Motion.punch(clampf(CGFloat(stateTime / 0.5), 0, 1))
         case .grabbed:
             return Motion.flail(t, drift: dragVelocity)
         case .dance:
-            if onFloor { return Motion.dance(CGFloat(stateTime)) }
+            if onFloor { return character == .deadpool ? Motion.deadpoolDance(CGFloat(stateTime)) : Motion.dance(CGFloat(stateTime)) }
             crawlingNow = true
             return Motion.crawlRest(t)
         case .heroLand:
-            if onFloor { return Motion.heroLanding(CGFloat(stateTime / 0.9)) }
+            if onFloor { return character == .deadpool ? Motion.deadpoolLanding(CGFloat(stateTime / 0.9)) : Motion.heroLanding(CGFloat(stateTime / 0.9)) }
             crawlingNow = true
             var p = Motion.crawlRest(t)
             p.squash = lerp(0.84, 1, clampf(CGFloat(stateTime / 0.28), 0, 1))
@@ -648,6 +746,11 @@ final class Buddy {
     }
 
     private func updateTilt(_ dt: CGFloat, _ world: World) {
+        if character == .deadpool, state == .jump || state == .fall {
+            // One somersault on the ascent; settle upright before touching down.
+            tilt = vel.y > 0 ? -CGFloat(stateTime) * 8 * facing : lerpAngle(tilt, 0, blendRate(Double(dt), 12))
+            return
+        }
         var target: CGFloat
         switch state {
         case .swing, .hang, .zip:
@@ -724,7 +827,16 @@ final class Buddy {
     }
 
     /// Snap a web line at a point — used to shoot at a villain.
+    func pistolShot(at point: CGPoint, scene: SKScene) {
+        guard character == .deadpool, grounded, currentState != .grabbed else { return }
+        face(toward: point.x)
+        enter(.pistolShot)
+        FX.hitSpark(at: rig.nearHandWorld ?? pos, in: scene)
+        FX.text("PEW!", at: pos + CGPoint(x: 0, y: reach + 16), in: scene)
+    }
+
     func webBlast(at point: CGPoint, scene: SKScene) {
+        guard character == .spider else { return }
         guard currentState != .grabbed else { return }
         blastTarget = point
         anchor = point

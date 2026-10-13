@@ -44,6 +44,9 @@ final class Rig {
     private var legNear: Limb!
     private var legFar: Limb!
 
+    private var heldSword = SKNode()
+    private var heldPistol = SKNode()
+
     private var eyes: [SKShapeNode] = []
     private var eyeHome: [CGPoint] = []
     private var eyeSize: [CGSize] = []
@@ -119,7 +122,10 @@ final class Rig {
         case .none: break
         case .tentacles: buildTentacles()
         case .wings: buildWings()
+        case .swords: buildSwords()
         }
+
+        if skin.deadpoolDetails { buildDeadpoolSuit() }
 
         // head ----------------------------------------------------------
         headPivot.position = CGPoint(x: 0.5, y: 21)
@@ -140,6 +146,30 @@ final class Rig {
         armNear.pivot.position = CGPoint(x: 5.2, y: 16)
         armNear.pivot.zPosition = 9
         upper.addChild(armNear.pivot)
+        if skin.deadpoolDetails { buildWeapons() }
+    }
+
+    private func buildWeapons() {
+        let blade = SKShapeNode(rect: CGRect(x: -1, y: 0, width: 2, height: 28), cornerRadius: 0.6)
+        blade.fillColor = SKColor(white: 0.85, alpha: 1)
+        blade.strokeColor = skin.ink
+        blade.lineWidth = 0.7
+        heldSword.addChild(blade)
+        let guardBar = SKShapeNode(rectOf: CGSize(width: 9, height: 2))
+        guardBar.fillColor = SKColor(white: 0.45, alpha: 1)
+        heldSword.addChild(guardBar)
+        armNear.tip.addChild(heldSword)
+        let barrel = SKShapeNode(rect: CGRect(x: -2, y: -10, width: 4, height: 10), cornerRadius: 1)
+        barrel.fillColor = SKColor(white: 0.28, alpha: 1)
+        barrel.strokeColor = skin.ink
+        heldPistol.addChild(barrel)
+        armNear.tip.addChild(heldPistol)
+        showWeapons(sword: false, pistol: false)
+    }
+
+    func showWeapons(sword: Bool, pistol: Bool) {
+        heldSword.isHidden = !sword
+        heldPistol.isHidden = !pistol
     }
 
     private func buildHead() {
@@ -150,6 +180,16 @@ final class Rig {
         head.zPosition = 0
         headNode.addChild(head)
 
+        if skin.deadpoolDetails {
+            for x: CGFloat in [-4.8, 4.4] {
+                let patch = SKShapeNode(ellipseOf: CGSize(width: 10, height: 15))
+                patch.position = CGPoint(x: x, y: 0.5)
+                patch.fillColor = skin.ink
+                patch.strokeColor = .clear
+                patch.zPosition = 0.5
+                headNode.addChild(patch)
+            }
+        }
         let k = skin.eyeScale
         _ = makeEye(size: CGSize(width: 9.4 * k, height: 8.0 * k), color: skin.eye,
                     tilt: -0.30, at: CGPoint(x: 4.0, y: 1.0), outline: 1.7)
@@ -161,6 +201,30 @@ final class Rig {
     private func buildHeadgear() {
         let ink = skin.ink
         switch skin.headgear {
+        case .helmet:
+            let helmet = SKShapeNode(rect: CGRect(x: -13, y: -9, width: 26, height: 23), cornerRadius: 9)
+            helmet.fillColor = skin.suitDark
+            helmet.strokeColor = skin.ink
+            helmet.lineWidth = 1.5
+            helmet.zPosition = 0.4
+            headNode.addChild(helmet)
+        case .skull:
+            let jaw = SKShapeNode(rect: CGRect(x: -5, y: -9, width: 10, height: 5), cornerRadius: 1)
+            jaw.fillColor = .white
+            jaw.strokeColor = skin.ink
+            jaw.lineWidth = 1
+            jaw.zPosition = 2
+            headNode.addChild(jaw)
+            let teeth = CGMutablePath()
+            for x in [-3, 0, 3] {
+                teeth.move(to: CGPoint(x: x, y: -8))
+                teeth.addLine(to: CGPoint(x: x, y: -5))
+            }
+            let lines = SKShapeNode(path: teeth)
+            lines.strokeColor = skin.ink
+            lines.lineWidth = 0.8
+            lines.zPosition = 3
+            headNode.addChild(lines)
         case .none:
             break
         case .hat:
@@ -243,6 +307,59 @@ final class Rig {
             crest.zPosition = 2
             headNode.addChild(crest)
         }
+    }
+
+    private func buildSwords() {
+        for angle: CGFloat in [-0.55, 0.55] {
+            let sword = SKNode()
+            sword.position = CGPoint(x: 0, y: 7)
+            sword.zRotation = angle
+            sword.zPosition = 0
+            let sheath = SKShapeNode(rect: CGRect(x: -1.8, y: -18, width: 3.6, height: 42), cornerRadius: 1.5)
+            sheath.fillColor = skin.ink
+            sheath.strokeColor = SKColor(white: 0.28, alpha: 1)
+            sheath.lineWidth = 0.8
+            sword.addChild(sheath)
+            let grip = SKShapeNode(rect: CGRect(x: -2, y: 24, width: 4, height: 11), cornerRadius: 1)
+            grip.fillColor = SKColor(white: 0.2, alpha: 1)
+            grip.strokeColor = skin.ink
+            sword.addChild(grip)
+            let guardBar = SKShapeNode(rectOf: CGSize(width: 10, height: 2))
+            guardBar.position.y = 24
+            guardBar.fillColor = SKColor(white: 0.6, alpha: 1)
+            guardBar.strokeColor = skin.ink
+            sword.addChild(guardBar)
+            upper.addChild(sword)
+        }
+    }
+
+    private func buildDeadpoolSuit() {
+        for x: CGFloat in [-6, 6] {
+            let panel = SKShapeNode(rect: CGRect(x: x - 2, y: 2, width: 4, height: 17), cornerRadius: 1.5)
+            panel.fillColor = skin.ink
+            panel.strokeColor = .clear
+            panel.zPosition = 5
+            upper.addChild(panel)
+        }
+        let belt = SKShapeNode(rectOf: CGSize(width: 17, height: 4))
+        belt.fillColor = SKColor(white: 0.12, alpha: 1)
+        belt.strokeColor = skin.ink
+        belt.zPosition = 7
+        hipNode.addChild(belt)
+        for x: CGFloat in [-6, 6] {
+            let pouch = SKShapeNode(rectOf: CGSize(width: 4, height: 6), cornerRadius: 1)
+            pouch.position = CGPoint(x: x, y: -1)
+            pouch.fillColor = SKColor(srgbRed: 0.38, green: 0.23, blue: 0.14, alpha: 1)
+            pouch.strokeColor = skin.ink
+            pouch.zPosition = 8
+            hipNode.addChild(pouch)
+        }
+        let buckle = SKShapeNode(circleOfRadius: 2.8)
+        buckle.fillColor = skin.suit
+        buckle.strokeColor = skin.ink
+        buckle.lineWidth = 1
+        buckle.zPosition = 9
+        hipNode.addChild(buckle)
     }
 
     /// Vulture style wings, flapping gently.

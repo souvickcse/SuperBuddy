@@ -24,6 +24,18 @@ struct SimCheck {
         world.reach = buddy.reach
         scene.addChild(buddy.rig.root)
         buddy.place(world)
+        // A skin swap must preserve a live character's physics and scene ownership.
+        let oldRoot = buddy.rig.root
+        let oldPosition = buddy.pos
+        let oldState = buddy.currentState
+        buddy.selectCharacter(.deadpool)
+        precondition(oldRoot.parent == nil && buddy.rig.root.parent === scene)
+        precondition(buddy.pos == oldPosition && buddy.currentState == oldState)
+        precondition(buddy.rig.skin.deadpoolDetails && buddy.rig.scale == buddy.scale)
+        buddy.selectCharacter(.spider)
+        precondition(!buddy.rig.skin.deadpoolDetails && buddy.rig.root.parent === scene)
+        if CommandLine.arguments.contains("--deadpool") { buddy.selectCharacter(.deadpool) }
+        print("character            : \(buddy.character.title)")
 
         let dt = 1.0 / 60.0
         let seconds = 600.0   // he rests about half the time now, so sample longer
@@ -55,6 +67,7 @@ struct SimCheck {
             buddy.cursor = CGPoint(x: size.width * 0.5 + sin(Double(ticks) / 300) * 400,
                                    y: size.height * 0.5 + cos(Double(ticks) / 220) * 300)
             buddy.update(dt: dt, world: world, scene: scene, web: web)
+            if buddy.character == .deadpool { precondition(web.phase == .idle) }
 
             let name = "\(buddy.currentState)"
             stateFrames[name, default: 0] += 1
@@ -102,7 +115,6 @@ struct SimCheck {
             ticks += 1
         }
 
-        let reach = buddy.reach
         let insideX = minX >= -1 && maxX <= size.width + 1
         let insideY = minY >= -1 && maxY <= size.height + 1
 
@@ -126,11 +138,13 @@ struct SimCheck {
         if unstable { failures.append("simulation went non-finite") }
         if !insideX || !insideY { failures.append("buddy escaped the screen") }
         if !surfacesSeen.contains("floor") { failures.append("never stood on the floor") }
+        if buddy.character == .spider {
         if !surfacesSeen.contains("ceiling") { failures.append("never crawled on the ceiling") }
         if !surfacesSeen.contains("left wall") || !surfacesSeen.contains("right wall") {
             failures.append("never crawled a side wall")
         }
         if swings < 3 { failures.append("barely used webs (\(swings) swings)") }
+        }
         if landings < 3 { failures.append("barely landed like a hero (\(landings))") }
         if minY < -1 { failures.append("fell below the floor") }
         if maxSpeed > 4000 { failures.append("unstable velocity") }
@@ -138,11 +152,16 @@ struct SimCheck {
         if ceilingSwings > 0 { failures.append("swung from the ceiling \(ceilingSwings) frames (should never web up there)") }
         if restMean < 1.5 { failures.append("his rests are too short (\(String(format: "%.1f", restMean))s)") }
         if restFrames < Int(seconds / dt) / 5 { failures.append("he hardly ever waits") }
+        if buddy.character == .spider {
         if zips < 2 { failures.append("almost never used the web zip (\(zips))") }
         if zipFellShort > zipArrivedHigh { failures.append("most web zips failed to reach an edge (\(zipArrivedHigh) up, \(zipFellShort) short)") }
         if upsideDownFrames < 40 { failures.append("hardly ever rested upside down (\(upsideDownFrames) frames)") }
         if uprightOnWall > 0 { failures.append("stood upright on a wall for \(uprightOnWall) frames") }
         if crawlFrames < 300 { failures.append("hardly ever crawled on a wall (\(crawlFrames) frames)") }
+        } else {
+            if swings != 0 || zips != 0 || upsideDownFrames != 0 { failures.append("Deadpool used Spider-Man traversal") }
+            if surfacesSeen != ["floor"] { failures.append("Deadpool clung to a wall or ceiling") }
+        }
         if blinks < 20 { failures.append("only \(blinks) blinks in 5 minutes") }
         if blinks > 400 { failures.append("blinking far too often (\(blinks))") }
 
@@ -179,7 +198,16 @@ struct SimCheck {
         // ---- menu commands
         buddy.place(world)
         buddy.swing(world, scene)
-        if buddy.currentState != .swing { failures.append("menu swing command failed") }
+        if buddy.character == .spider && buddy.currentState != .swing { failures.append("menu swing command failed") }
+        if buddy.character == .deadpool && buddy.currentState == .swing { failures.append("Deadpool accepted a swing command") }
+        if buddy.character == .deadpool {
+            buddy.webZip(world, scene)
+            buddy.hangFromWeb(world, scene)
+            buddy.hangUpsideDown(world, scene)
+            buddy.webBlast(at: .zero, scene: scene)
+            buddy.update(dt: dt, world: world, scene: scene, web: web)
+            if web.phase != .idle { failures.append("Deadpool drew a web") }
+        }
         for _ in 0..<300 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
         buddy.jump(world)
         if buddy.currentState != .jump { failures.append("menu jump command failed") }
@@ -205,7 +233,7 @@ struct SimCheck {
                 villainSeen = true
                 if v.health < lastHealth { lastHealth = v.health }
             }
-            if lastState != .webBlast && buddy.currentState == .webBlast { blasts += 1 }
+            if lastState != buddy.currentState && (buddy.currentState == .webBlast || buddy.currentState == .pistolShot) { blasts += 1 }
             if lastState != .punch && buddy.currentState == .punch { punches += 1 }
             lastState = buddy.currentState
             if villainSeen && !battle.isActive { battleOver = true; break }
@@ -215,7 +243,7 @@ struct SimCheck {
         let fightSeconds = Double(fightFrames) * dt
         print("")
         print("battle               : \(summoned ? "summoned" : "FAILED"), \(villainSeen ? "villain appeared" : "no villain"), "
-              + "\(defeated ? "knocked out" : "not knocked out"), \(blasts) web blasts, \(punches) punches, "
+              + "\(defeated ? "knocked out" : "not knocked out"), \(blasts) ranged attacks, \(punches) melee attacks, "
               + String(format: "over in %.1fs", fightSeconds))
         if !summoned { failures.append("could not summon a villain") }
         if !villainSeen { failures.append("the villain never turned up") }
@@ -227,11 +255,12 @@ struct SimCheck {
 
         // ---- one fight per villain archetype, so every fighting style is exercised
         var archetypeReport: [String] = []
-        for archetype in ["brawler", "charger", "flyer", "shooter"] {
-            guard let skin = Skin.villains.first(where: { "\($0.archetype)" == archetype }) else {
-                failures.append("no villain uses the \(archetype) archetype")
-                continue
-            }
+        let roster = Skin.villains(for: buddy.character)
+        let opponents = buddy.character == .deadpool ? roster : ["brawler", "charger", "flyer", "shooter"].compactMap { name in
+            roster.first { "\($0.archetype)" == name }
+        }
+        for skin in opponents {
+            let archetype = "\(skin.archetype)"
             buddy.place(world)
             let b = Battle()
             let started = b.summon(world: world, scene: scene, buddy: buddy, skin: skin)
