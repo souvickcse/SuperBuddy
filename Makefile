@@ -1,4 +1,4 @@
-APP := SpiderBuddy
+APP := SuperBuddy
 CONF ?= Release
 
 .PHONY: all run build gen preview check icon dist clean

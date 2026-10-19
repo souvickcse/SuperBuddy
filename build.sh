@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds SpiderBuddy.app. Usage:
+# Builds SuperBuddy.app. Usage:
 #   ./build.sh              -> Release build
 #   ./build.sh Debug        -> Debug build
 #   ./build.sh Release run  -> build then launch
@@ -17,17 +17,17 @@ fi
 xcodegen generate
 
 xcodebuild \
-  -project SpiderBuddy.xcodeproj \
-  -scheme SpiderBuddy \
+  -project SuperBuddy.xcodeproj \
+  -scheme SuperBuddy \
   -configuration "$CONF" \
   -derivedDataPath build \
   build
 
-APP="build/Build/Products/${CONF}/SpiderBuddy.app"
+APP="build/Build/Products/${CONF}/SuperBuddy.app"
 echo ""
 echo "Built  ->  $APP"
 
 if [ "$DO_RUN" = "run" ]; then
   open "$APP"
-  echo "Spider Buddy is now on your desktop. Look for the spider in the menu bar."
+  echo "Super Buddy is now on your desktop. Look for the spider in the menu bar."
 fi

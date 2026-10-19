@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var passThroughTimer: Timer?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        migratePreferences()
         let screen = Self.targetScreen()
         buildWindow(frame: screen.frame)
         startPassThroughWatcher()
@@ -22,6 +23,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                                selector: #selector(screensChanged),
                                                name: NSApplication.didChangeScreenParametersNotification,
                                                object: nil)
+    }
+
+    /// Import existing settings once after the app's bundle-identifier rename.
+    private func migratePreferences() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: "didMigratePreviousBuddyPreferences") else { return }
+        let previous = defaults.persistentDomain(forName: "com.souvickghosh.spiderbuddy") ?? [:]
+        for key in ["buddyCharacter", "buddyScale", "buddyDisplay"] {
+            if defaults.object(forKey: key) == nil, let value = previous[key] {
+                defaults.set(value, forKey: key)
+            }
+        }
+        defaults.set(true, forKey: "didMigratePreviousBuddyPreferences")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }

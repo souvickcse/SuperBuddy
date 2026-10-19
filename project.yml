@@ -1,4 +1,4 @@
-name: SpiderBuddy
+name: SuperBuddy
 options:
   bundleIdPrefix: com.souvickghosh
   deploymentTarget:
@@ -19,7 +19,7 @@ settings:
     DEAD_CODE_STRIPPING: YES
 
 targets:
-  SpiderBuddy:
+  SuperBuddy:
     type: application
     platform: macOS
     sources:
@@ -28,15 +28,15 @@ targets:
         buildPhase: resources
     settings:
       base:
-        PRODUCT_NAME: SpiderBuddy
-        PRODUCT_BUNDLE_IDENTIFIER: com.souvickghosh.spiderbuddy
+        PRODUCT_NAME: SuperBuddy
+        PRODUCT_BUNDLE_IDENTIFIER: com.souvickghosh.superbuddy
         COMBINE_HIDPI_IMAGES: YES
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.entertainment
     info:
       path: Resources/Info.plist
       properties:
-        CFBundleName: SpiderBuddy
-        CFBundleDisplayName: Spider Buddy
+        CFBundleName: SuperBuddy
+        CFBundleDisplayName: Super Buddy
         CFBundlePackageType: APPL
         CFBundleIconFile: AppIcon
         CFBundleShortVersionString: "1.0"
@@ -48,10 +48,10 @@ targets:
         NSHumanReadableCopyright: ""
 
 schemes:
-  SpiderBuddy:
+  SuperBuddy:
     build:
       targets:
-        SpiderBuddy: all
+        SuperBuddy: all
     run:
       config: Debug
     archive:

@@ -33,7 +33,7 @@ enum VillainArchetype {
 /// Everything that makes one character look different from another. The buddy uses the
 /// default skin, so his appearance is unchanged; villains are just other skins.
 struct Skin {
-    var name = "Spider Buddy"
+    var name = "Spider-Man"
 
     var suit = Palette.red
     var suitDark = Palette.redDark
@@ -204,6 +204,6 @@ struct Skin {
 /// Stable preference IDs are independent of the names shown in the menu.
 enum BuddyCharacter: String, CaseIterable {
     case spider, deadpool
-    var title: String { self == .spider ? "Spider Buddy" : "Deadpool" }
+    var title: String { self == .spider ? "Spider-Man" : "Deadpool" }
     var skin: Skin { self == .spider ? .buddy : .deadpool }
 }

@@ -2,7 +2,7 @@ import AppKit
 import CoreGraphics
 import Foundation
 
-// icon.swift - draws the SpiderBuddy app icon (1024x1024 PNG).
+// icon.swift - draws the SuperBuddy app icon (1024x1024 PNG).
 // Usage: swiftc ... Tools/icon.swift -o .build/icon && ./.build/icon out.png
 
 @main

@@ -1,8 +1,8 @@
-# Spider Buddy 🕷️
+# Super Buddy 🕷️
 
 A tiny superhero who lives on your Mac desktop.
 
-Use **Choose Buddy → Spider Buddy / Deadpool** in the spider menu to switch characters.
+Use **Choose Buddy → Spider-Man / Deadpool** in the spider menu to switch characters.
 Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
 Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
@@ -64,7 +64,7 @@ There is no Dock icon; everything lives in the **menu bar** (🕷️):
 * **Display** — pick which screen he lives on (multi-monitor)
 * **Send back home** — back to the middle of the screen
 * **Pause / Resume** — freeze him (great while screen sharing)
-* **Quit Spider Buddy**
+* **Quit Super Buddy**
 
 ## Build & run
 
@@ -72,7 +72,7 @@ Requirements: macOS 13+, Xcode command line tools, and [xcodegen](https://github
 (`brew install xcodegen`).
 
 ```bash
-cd SpiderBuddy
+cd SuperBuddy
 ./build.sh Release run
 ```
 
@@ -93,18 +93,18 @@ make clean      # remove build artefacts
 `make dist` produces a **universal** (Apple Silicon **and** Intel) Release build and
 wraps it two ways in `dist/`:
 
-* `SpiderBuddy-1.0-universal.dmg` — open it, drag the app onto the Applications
+* `SuperBuddy-1.0-universal.dmg` — open it, drag the app onto the Applications
   shortcut. Friendliest for other people.
-* `SpiderBuddy-1.0-universal-macOS.zip` — the same app, zipped.
+* `SuperBuddy-1.0-universal-macOS.zip` — the same app, zipped.
 
-Both include a **How to open Spider Buddy.txt** explaining the one thing that always
+Both include a **How to open Super Buddy.txt** explaining the one thing that always
 trips people up: the app is **ad-hoc signed, not notarised**, because that needs a paid
 Apple Developer certificate. The first launch therefore needs a right-click → **Open**
-(or `xattr -dr com.apple.quarantine /Applications/SpiderBuddy.app`). The note says so in
+(or `xattr -dr com.apple.quarantine /Applications/SuperBuddy.app`). The note says so in
 plain language, so you can forward the file as-is.
 
-Or open `SpiderBuddy.xcodeproj` (created by xcodegen — run `xcodegen generate` once),
-select the **SpiderBuddy** scheme and hit ⌘R.
+Or open `SuperBuddy.xcodeproj` (created by xcodegen — run `xcodegen generate` once),
+select the **SuperBuddy** scheme and hit ⌘R.
 
 ## Every animation at a glance
 
@@ -121,7 +121,7 @@ in the project at all.
 ## Project layout
 
 ```
-SpiderBuddy/
+SuperBuddy/
 ├── project.yml                  # xcodegen project definition
 ├── build.sh / Makefile          # command line builds
 ├── Resources/                   # Info.plist (generated) + AppIcon.icns
@@ -148,7 +148,7 @@ SpiderBuddy/
     │   └── Effects.swift        # shockwaves, dust, cracks, notes, THWIP!
     └── Support/
         ├── MathUtil.swift       # small vector/angle helpers
-        └── Debug.swift          # opt-in trace (only with /tmp/spiderbuddy.debug)
+        └── Debug.swift          # opt-in trace (only with /tmp/superbuddy.debug)
 ```
 
 ### The rogues gallery

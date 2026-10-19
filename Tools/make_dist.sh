@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds a shareable copy of Spider Buddy: a universal (Apple Silicon + Intel)
+# Builds a shareable copy of Super Buddy: a universal (Apple Silicon + Intel)
 # Release build, wrapped in both a .zip and a .dmg, with a note for whoever you send it to.
 #
 #   ./Tools/make_dist.sh
@@ -8,10 +8,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="SpiderBuddy"
+APP_NAME="SuperBuddy"
 VERSION="1.0"
 DIST="dist"
 APP="build/Build/Products/Release/${APP_NAME}.app"
+
+xcodegen generate
 
 echo "==> building universal Release (arm64 + x86_64)"
 xcodebuild \
@@ -21,7 +23,7 @@ xcodebuild \
   -derivedDataPath build \
   ARCHS="arm64 x86_64" \
   ONLY_ACTIVE_ARCH=NO \
-  build | grep -E "error:|warning: .*deprecat|BUILD SUCCEEDED|BUILD FAILED" || true
+  build
 
 test -d "$APP" || { echo "build produced no app"; exit 1; }
 
@@ -42,8 +44,8 @@ rm -rf "$DIST"
 mkdir -p "$DIST"
 
 # the note that goes out with it
-cat > "$DIST/How to open Spider Buddy.txt" <<'TXT'
-Spider Buddy - a tiny web-slinging hero who lives on your desktop.
+cat > "$DIST/How to open Super Buddy.txt" <<'TXT'
+Super Buddy - a tiny web-slinging hero who lives on your desktop.
 
 REQUIREMENTS
   macOS 13 (Ventura) or newer. Works on Apple Silicon and Intel Macs.
@@ -56,28 +58,28 @@ FIRST LAUNCH - PLEASE READ THIS BIT
   unsigned. Pick ONE of these three:
 
   A. The usual way (macOS 13 and later)
-      1. Drag SpiderBuddy.app into your Applications folder.
+      1. Drag SuperBuddy.app into your Applications folder.
       2. Double-click it. macOS blocks it - click "Done", NOT "Move to Bin".
       3. Open System Settings > Privacy & Security.
       4. Scroll down to the "Security" section near the bottom. There is now a
-         line saying SpiderBuddy.app was blocked because it is not from an
+         line saying SuperBuddy.app was blocked because it is not from an
          identified developer. Click "Open Anyway" and enter your password.
       5. Double-click the app again, then click "Open".
 
   B. The quick way (Terminal, one line)
-       xattr -dr com.apple.quarantine /Applications/SpiderBuddy.app
+       xattr -dr com.apple.quarantine /Applications/SuperBuddy.app
      Then double-click the app. This only clears the "downloaded from the
      internet" flag - you are not turning off any security feature.
 
   C. Skip all of it - build it yourself
-     With Xcode command line tools installed, open the SpiderBuddy project
+     With Xcode command line tools installed, open the SuperBuddy project
      folder and run:   make run
      An app built on your own Mac is never quarantined, so it just opens.
 
   Note: "right-click > Open" was the old trick. Recent macOS versions removed
   it for downloaded apps, which is why it may not work for you any more.
 
-  No installer, nothing to configure. To uninstall, delete SpiderBuddy.app.
+  No installer, nothing to configure. To uninstall, delete SuperBuddy.app.
 
 
 WHAT IT IS
@@ -102,12 +104,12 @@ PRIVACY
   No network access, no analytics, no accounts. The app only draws on your
   screen and reads nothing.
 
-Built from source in the SpiderBuddy project (see README.md). Original
+Built from source in the SuperBuddy project (see README.md). Original
 procedurally drawn artwork; an unofficial fan project, not affiliated with
 Marvel.
 TXT
 
-FOLDER="Spider Buddy ${VERSION}"
+FOLDER="Super Buddy ${VERSION}"
 
 if [ "$SIGN_IDENTITY" != "-" ]; then
   echo "==> signing with $SIGN_IDENTITY"
@@ -123,8 +125,8 @@ echo "==> zipping"
 STAGE=".build/zip"
 rm -rf "$STAGE"
 mkdir -p "$STAGE/$FOLDER"
-cp -R "$APP" "$STAGE/$FOLDER/"
-cp "$DIST/How to open Spider Buddy.txt" "$STAGE/$FOLDER/"
+ditto --norsrc --noextattr "$APP" "$STAGE/$FOLDER/${APP_NAME}.app"
+cp "$DIST/How to open Super Buddy.txt" "$STAGE/$FOLDER/"
 ditto -c -k --keepParent "$STAGE/$FOLDER" "$DIST/${APP_NAME}-${VERSION}-universal-macOS.zip"
 rm -rf "$STAGE"
 
@@ -132,13 +134,12 @@ echo "==> building disk image"
 STAGE=".build/dmg"
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/"
-cp "$DIST/How to open Spider Buddy.txt" "$STAGE/"
+ditto --norsrc --noextattr "$APP" "$STAGE/${APP_NAME}.app"
+cp "$DIST/How to open Super Buddy.txt" "$STAGE/"
 ln -s /Applications "$STAGE/Applications"
-# makehybrid writes the image directly; `hdiutil create -srcfolder` needs to
-# attach a disk device, which not every environment allows
-hdiutil makehybrid -quiet -hfs -hfs-volume-name "Spider Buddy" \
-  -o "$DIST/${APP_NAME}-${VERSION}-universal.dmg" -ov "$STAGE"
+# Use a compressed disk image so signed app metadata stays intact.
+hdiutil create -format UDZO -volname "Super Buddy" \
+  -srcfolder "$STAGE" -o "$DIST/${APP_NAME}-${VERSION}-universal.dmg" -ov
 rm -rf "$STAGE"
 
 echo "==> verifying"
@@ -147,6 +148,7 @@ rm -rf "$MOUNT"; mkdir -p "$MOUNT"
 hdiutil attach -readonly -nobrowse -mountpoint "$PWD/$MOUNT" \
   "$DIST/${APP_NAME}-${VERSION}-universal.dmg" >/dev/null
 test -x "$MOUNT/${APP_NAME}.app/Contents/MacOS/${APP_NAME}" && echo "    app is inside the dmg and executable"
+codesign --verify --deep --strict "$MOUNT/${APP_NAME}.app"
 lipo -info "$MOUNT/${APP_NAME}.app/Contents/MacOS/${APP_NAME}" | sed 's/^/    /'
 hdiutil detach "$PWD/$MOUNT" >/dev/null
 rm -rf "$MOUNT"

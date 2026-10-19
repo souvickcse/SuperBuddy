@@ -17,13 +17,13 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
             button.title = "\u{1F577}\u{FE0F}"
-            button.toolTip = "Spider Buddy"
+            button.toolTip = "Super Buddy"
             button.font = NSFont.systemFont(ofSize: 15)
         }
 
         let menu = NSMenu()
 
-        menu.addItem(header("Spider Buddy"))
+        menu.addItem(header("Super Buddy"))
         menu.addItem(.separator())
 
         menu.addItem(make("Come to my cursor", .come, "c"))
@@ -69,7 +69,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Send back home", .reset, "r"))
         menu.addItem(make("Pause / Resume", .pause, "p"))
         menu.addItem(.separator())
-        menu.addItem(make("Quit Spider Buddy", nil, "q", selector: #selector(quit)))
+        menu.addItem(make("Quit Super Buddy", nil, "q", selector: #selector(quit)))
 
         menu.delegate = self
         mainMenu = menu
