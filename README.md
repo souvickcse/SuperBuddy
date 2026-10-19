@@ -198,8 +198,8 @@ and utility belt accompany a deliberate patrol walk, Batarang pose, punch/kick c
 grappling cable and cape glide. He does not shoot webs or cling upside down.
 
 Batman’s menu adds **Throw Batarang** (⌘B), **Combat combo** (⌘K), **Grapple** (⌘G),
-**Glide** (⌘L), **Summon Batmobile**, **Enter & drive Batmobile** (⌘M), and **Dismiss
-Batmobile**. Click him to scan the area and flip a Batarang. He occasionally does
+**Glide** (⌘L), and **Batmobile** (⌘M). The single Batmobile command starts a ride;
+choose it again while the car is active to bring it back and dismiss it. Click him to scan the area and flip a Batarang. He occasionally does
 this during a patrol, or takes an automatic Batmobile ride.
 
 The compact black, finned Batmobile arrives along the bottom edge, parks, opens its
@@ -232,7 +232,7 @@ opponents after `make check`.
 
 ## Bat-Signal and bat camouflage
 
-With Batman selected, use **Bat-Signal & bat camouflage** (⌘E). A golden spotlight
+With Batman selected, use **Bat-Signal** (⌘E). A golden spotlight
 projects the bat emblem into the sky; 42 animated bats fly in, swirl around Batman,
 conceal him for two seconds, then scatter as he reappears. The swarm follows him
 as he moves. This is a visual camouflage effect, not an invulnerability power.

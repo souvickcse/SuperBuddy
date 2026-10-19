@@ -145,12 +145,15 @@ final class BuddyScene: SKScene {
         buddy.webZip(world, self, toCeiling: true)
     }
     func commandGlide() { if !frozen { buddy.glide(world) } }
-    func commandCar(drive: Bool) {
-        guard !frozen else { return }
-        batSignal.cancel(buddy: buddy)
-        _ = batmobile.summon(world: world, scene: self, buddy: buddy, drive: drive)
+    func commandBatmobile() {
+        guard buddy.character == .batman, !frozen else { return }
+        if batmobile.active {
+            batmobile.dismiss(world: world, buddy: buddy)
+        } else {
+            batSignal.cancel(buddy: buddy)
+            _ = batmobile.summon(world: world, scene: self, buddy: buddy, drive: true)
+        }
     }
-    func commandDismissCar() { if !frozen { batmobile.dismiss(world: world, buddy: buddy) } }
 
     func commandDance() { if !buddy.inVehicle { buddy.dance(self) } }
 

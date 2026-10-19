@@ -9,7 +9,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private var characterMenu: NSMenu?
 
     private enum Tag: Int {
-        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, summonCar, driveCar, dismissCar, smash, clap, batSignal
+        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, batmobile, smash, clap, batSignal
         case sizeSmall = 100, sizeMedium, sizeLarge
     }
 
@@ -35,14 +35,12 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Fire pistol", .pistol, "f"))
         menu.addItem(make("Hulk smash!", .smash, "k"))
         menu.addItem(make("Thunderclap", .clap, "t"))
-        menu.addItem(make("Bat-Signal & bat camouflage", .batSignal, "e"))
+        menu.addItem(make("Bat-Signal", .batSignal, "e"))
         menu.addItem(make("Throw Batarang", .batarang, "b"))
         menu.addItem(make("Combat combo", .combo, "k"))
         menu.addItem(make("Grapple", .grapple, "g"))
         menu.addItem(make("Glide", .glide, "l"))
-        menu.addItem(make("Summon Batmobile", .summonCar, ""))
-        menu.addItem(make("Enter & drive Batmobile", .driveCar, "m"))
-        menu.addItem(make("Dismiss Batmobile", .dismissCar, ""))
+        menu.addItem(make("Batmobile", .batmobile, "m"))
         menu.addItem(make("Shoot a web & swing", .swing, "s"))
         menu.addItem(make("Go hang from the ceiling", .hang, "h"))
         menu.addItem(make("Web-zip to the ceiling", .zipUp, "u"))
@@ -100,7 +98,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             if [Tag.swing, .hang, .zipUp, .zipSide, .restUpsideDown].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = isDeadpool || isBatman || isHulk
             }
-            if [Tag.batarang, .combo, .grapple, .glide, .summonCar, .driveCar, .dismissCar, .batSignal].map({ $0.rawValue }).contains(item.tag) {
+            if [Tag.batarang, .combo, .grapple, .glide, .batmobile, .batSignal].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = !isBatman
             }
             if [Tag.smash, .clap].map({ $0.rawValue }).contains(item.tag) { item.isHidden = !isHulk }
@@ -175,9 +173,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .combo: BuddyCenter.shared.scene?.commandCombo()
         case .grapple: BuddyCenter.shared.scene?.commandGrapple()
         case .glide: BuddyCenter.shared.scene?.commandGlide()
-        case .summonCar: BuddyCenter.shared.scene?.commandCar(drive: false)
-        case .driveCar: BuddyCenter.shared.scene?.commandCar(drive: true)
-        case .dismissCar: BuddyCenter.shared.scene?.commandDismissCar()
+        case .batmobile: BuddyCenter.shared.scene?.commandBatmobile()
         case .pause: BuddyCenter.shared.togglePause()
         case .reset: BuddyCenter.shared.reset()
         case .sizeSmall: BuddyCenter.shared.setScale(0.62)
