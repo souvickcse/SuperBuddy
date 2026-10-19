@@ -6,9 +6,9 @@ import SpriteKit
 final class Buddy {
 
     enum State: Equatable {
-        case stand, walk, run, jump, fall, swing, hang, zip, webBlast, pistolShot, punch, grabbed, dance, heroLand, recover
+        case stand, walk, run, jump, fall, glide, batarang, swing, hang, zip, webBlast, pistolShot, punch, grabbed, dance, heroLand, recover
 
-        var isAirborne: Bool { self == .jump || self == .fall || self == .swing || self == .hang || self == .zip }
+        var isAirborne: Bool { self == .jump || self == .fall || self == .glide || self == .swing || self == .hang || self == .zip }
     }
 
     // MARK: Tuning
@@ -19,6 +19,7 @@ final class Buddy {
     var jumpSpeed: CGFloat = 950
     var speedScale: CGFloat = 1
     var paused = false
+    private(set) var inVehicle = false
     var scale: CGFloat = 0.9 { didSet { rig.scale = scale } }
 
     // MARK: Rig + simulation
@@ -43,12 +44,16 @@ final class Buddy {
         rig = replacement
         self.character = character
         webShotPending = false
-        if character == .deadpool, state.isAirborne || surface != .floor || state == .webBlast {
+        inVehicle = false
+        resumeWalkAfterSlash = false
+        if state.isAirborne || surface != .floor {
             surface = .floor
             up = CGPoint(x: 0, y: 1)
             grounded = false
             vel = CGPoint(x: 0, y: -120)
             enter(.fall)
+        } else if state == .webBlast || state == .batarang || state == .pistolShot || state == .punch || state == .dance {
+            enter(.stand)
         }
     }
     private(set) var state: State = .stand
@@ -148,6 +153,7 @@ final class Buddy {
     // MARK: Frame
 
     func update(dt: TimeInterval, world: World, scene: SKScene, web: WebLine) {
+        guard !inVehicle else { return }
         let cdt = CGFloat(dt)
         if !paused {
             animTime += dt
@@ -162,6 +168,8 @@ final class Buddy {
         rig.apply(currentPose)
         rig.showWeapons(sword: character == .deadpool && state == .punch,
                         pistol: character == .deadpool && state == .pistolShot)
+        rig.animateCostume(time: CGFloat(animTime), gliding: state == .glide,
+                           batarang: state == .batarang && stateTime < 0.36 || character == .batman && state == .dance)
         rig.look(at: cursor)
 
         let jitter = shakeMag > 0.05
@@ -184,7 +192,7 @@ final class Buddy {
     }
 
     private func updateWeb(dt: TimeInterval, web: WebLine, scene: SKScene) {
-        guard character == .spider else {
+        guard character == .spider || character == .batman && state == .zip else {
             webShotPending = false
             if web.phase != .idle { web.release() }
             return
@@ -193,8 +201,8 @@ final class Buddy {
         if webShotPending {
             webShotPending = false
             let from = gripping ?? pos
-            web.shoot(from: from, to: anchor)
-            FX.text("THWIP!", at: from + CGPoint(x: 0, y: 16), in: scene)
+            web.shoot(from: from, to: anchor, cable: character == .batman)
+            if character == .spider { FX.text("THWIP!", at: from + CGPoint(x: 0, y: 16), in: scene) }
         }
         if state == .swing || state == .hang || state == .zip || state == .webBlast {
             web.update(dt: dt, hand: gripping, anchor: anchor)
@@ -206,7 +214,7 @@ final class Buddy {
     // MARK: State machine
 
     func enter(_ s: State) {
-        if s != .punch && s != .walk { resumeWalkAfterSlash = false }
+        if s != .punch && s != .walk && s != .dance { resumeWalkAfterSlash = false }
         state = s
         stateTime = 0
         weaponEffectIndex = 0
@@ -224,8 +232,9 @@ final class Buddy {
         case .hang: stateDuration = Double(randf(hangInverted ? 2.4 : 1.5, hangInverted ? 4.6 : 2.9))
         case .zip: stateDuration = 2.0
         case .webBlast: stateDuration = 0.52
+        case .batarang: stateDuration = 1.1
         case .pistolShot: stateDuration = Motion.pistolDuration
-        case .punch: stateDuration = character == .deadpool ? Motion.katanaDuration : 0.50
+        case .punch: stateDuration = character == .deadpool ? Motion.katanaDuration : (character == .batman ? 1.25 : 0.50)
         case .swing: stateDuration = Double(randf(1.6, 2.6))
         case .heroLand: stateDuration = 0.9
         case .recover: stateDuration = 0.45
@@ -239,6 +248,18 @@ final class Buddy {
             if stateTime > stateDuration { decide(world, scene) }
         case .walk, .run:
             stepGrounded(dt, world, scene)
+        case .glide:
+            vel.y = Swift.max(-125, vel.y - 180 * dt)
+            pos = pos + vel * dt
+            if pos.x < world.leftX + reach || pos.x > world.rightX - reach { vel.x = -vel.x; facing = -facing }
+            pos.x = world.clampX(pos.x)
+            _ = tryLand(world, scene: scene)
+        case .batarang:
+            if weaponEffectIndex == 0 && stateTime >= 0.36 {
+                weaponEffectIndex = 1
+                FX.batarang(from: rig.nearHandWorld ?? pos, to: blastTarget, in: scene)
+            }
+            if stateTime > stateDuration { enter(.stand) }
         case .jump, .fall:
             stepAir(dt, world, scene)
         case .swing:
@@ -271,7 +292,11 @@ final class Buddy {
                 }
             }
         case .dance:
-            if stateTime > stateDuration { enter(.stand) }
+            if stateTime > stateDuration {
+                let resume = character == .batman && resumeWalkAfterSlash && !inBattle
+                resumeWalkAfterSlash = false
+                enter(resume ? .walk : .stand)
+            }
         case .heroLand:
             if stateTime > stateDuration { enter(.recover) }
         case .recover:
@@ -282,12 +307,12 @@ final class Buddy {
     // MARK: Grounded locomotion (walks along whichever edge it is standing on)
 
     private func stepGrounded(_ dt: CGFloat, _ world: World, _ scene: SKScene) {
-        if character == .deadpool, state == .walk, !inBattle, !pressing {
+        if character != .spider, state == .walk, !inBattle, !pressing {
             walkingSlashIn -= TimeInterval(dt)
             if walkingSlashIn <= 0 {
                 walkingSlashIn = Double(randf(6, 14))
                 resumeWalkAfterSlash = true
-                enter(.punch)
+                enter(character == .batman ? .dance : .punch)
                 return
             }
         }
@@ -305,7 +330,7 @@ final class Buddy {
             facing = -facing
         }
 
-        if character == .deadpool, world.cornerTransition(pos, from: .floor) != nil {
+        if character != .spider, world.cornerTransition(pos, from: .floor) != nil {
             facing = -facing
         }
         if character == .spider, let next = world.cornerTransition(pos, from: surface) {
@@ -337,11 +362,11 @@ final class Buddy {
         vel.x *= (1 - 0.30 * dt)
         pos = pos + vel * dt
         pos.x = clampf(pos.x, world.leftX + 5, world.rightX - 5)
-        if character == .deadpool, pos.y > world.ceilY - reach {
+        if character != .spider, pos.y > world.ceilY - reach {
             pos.y = world.ceilY - reach
             vel.y = Swift.min(0, vel.y)
         }
-        if state == .jump && vel.y <= 0 { enter(.fall) }
+        if state == .jump && vel.y <= 0 { enter(character == .batman ? .glide : .fall) }
         if tryLand(world, scene: scene) { return }
         // safety net: never leave the desktop
         if pos.y < world.floorY - 200 { pos.y = world.floorY + reach; _ = tryLand(world, scene: scene) }
@@ -479,6 +504,11 @@ final class Buddy {
 
         if stateTime > noLandBefore, tryLand(world, scene: scene) { return }
         if progress >= 1 {
+            if character == .batman {
+                vel = CGPoint(x: facing * 190, y: -50)
+                enter(.glide)
+                return
+            }
             let (s, _) = world.nearestSurface(to: pos)
             land(on: s, world: world, scene: scene, impact: 0)
         }
@@ -488,6 +518,16 @@ final class Buddy {
 
     private func decide(_ world: World, _ scene: SKScene) {
         guard !paused, !isGrabbed, !inBattle else { return }
+        if character == .batman {
+            let roll = randf(0, 1)
+            if roll < 0.3 { enter(.walk) }
+            else if roll < 0.42 { enter(.run) }
+            else if roll < 0.55 { jump(world) }
+            else if roll < 0.65 { webZip(world, scene, toCeiling: true) }
+            else if roll < 0.77 { dance(scene) }
+            else { enter(.stand) }
+            return
+        }
         if character == .deadpool {
             let roll = randf(0, 1)
             if roll < 0.28 { enter(.walk) }
@@ -534,7 +574,7 @@ final class Buddy {
 
     func jump(_ world: World) {
         let t = world.tangent(for: surface)
-        if character == .deadpool {
+        if character != .spider {
             vel = CGPoint(x: facing * randf(180, 320), y: jumpSpeed * 0.78)
             grounded = false
             forceHeroLand = true
@@ -623,7 +663,7 @@ final class Buddy {
     /// Shoot a line at the ceiling (or the nearest wall) and get pulled straight
     /// there, arriving in a crawl stance.
     func webZip(_ world: World, _ scene: SKScene, toCeiling: Bool? = nil) {
-        guard character == .spider else { return }
+        guard character != .deadpool else { return }
         let goUp = toCeiling ?? chance(0.62)
         let target: CGPoint
         let attach: CGPoint
@@ -644,7 +684,7 @@ final class Buddy {
             return
         }
         zipStart = pos
-        zipEnd = target
+        zipEnd = character == .batman ? CGPoint(x: target.x, y: world.ceilY - reach - 100) : target
         zipArc = randf(-36, 36)
         zipDuration = Double(clampf((target - pos).length / 900, 0.34, 0.95))
         anchor = attach
@@ -669,7 +709,8 @@ final class Buddy {
         forceHeroLand = false
         enter(.dance)
         blinkNow()
-        FX.notes(at: pos + CGPoint(x: 0, y: reach + 8), in: scene, count: 5)
+        if character == .batman { FX.text("GOTHAM IS SAFE.", at: pos + CGPoint(x: 0, y: reach + 12), in: scene) }
+        else { FX.notes(at: pos + CGPoint(x: 0, y: reach + 8), in: scene, count: 5) }
         FX.hitSpark(at: pos, in: scene)
     }
 
@@ -700,17 +741,21 @@ final class Buddy {
 
         switch state {
         case .stand:
-            if onFloor { return character == .deadpool ? Motion.deadpoolIdle(t) : Motion.idle(t) }
+            if onFloor { return character == .batman ? Motion.batmanIdle(t) : (character == .deadpool ? Motion.deadpoolIdle(t) : Motion.idle(t)) }
             crawlingNow = true
             return Motion.crawlRest(t)
         case .walk:
-            if onFloor { return character == .deadpool ? Motion.deadpoolWalk(t) : Motion.walk(t, speed: 1) }
+            if onFloor { return character == .batman ? Motion.batmanWalk(t) : (character == .deadpool ? Motion.deadpoolWalk(t) : Motion.walk(t, speed: 1)) }
             crawlingNow = true
             return Motion.crawl(t, speed: 1)
         case .run:
             if onFloor { return Motion.run(t, speed: 1) }
             crawlingNow = true
             return Motion.crawl(t, speed: 1.45)
+        case .glide:
+            return Motion.batmanGlide(t)
+        case .batarang:
+            return Motion.batmanThrow(CGFloat(stateTime / 1.1))
         case .jump, .fall:
             return character == .deadpool ? Motion.deadpoolAir(t) : Motion.air(t, vertical: vel.y)
         case .swing:
@@ -724,11 +769,13 @@ final class Buddy {
         case .pistolShot:
             return Motion.deadpoolShoot(CGFloat(stateTime / Motion.pistolDuration))
         case .punch:
+            if character == .batman { return Motion.batmanCombo(CGFloat(stateTime / 1.25)) }
             if character == .deadpool { return Motion.deadpoolSlash(CGFloat(stateTime / Motion.katanaDuration)) }
             return Motion.punch(clampf(CGFloat(stateTime / 0.5), 0, 1))
         case .grabbed:
             return Motion.flail(t, drift: dragVelocity)
         case .dance:
+            if character == .batman { return Motion.batmanThrow(CGFloat(stateTime / Motion.danceDuration)) }
             if onFloor { return character == .deadpool ? Motion.deadpoolDance(CGFloat(stateTime)) : Motion.dance(CGFloat(stateTime)) }
             crawlingNow = true
             return Motion.crawlRest(t)
@@ -746,6 +793,10 @@ final class Buddy {
     }
 
     private func updateTilt(_ dt: CGFloat, _ world: World) {
+        if character == .batman, state == .glide || state == .jump || state == .fall {
+            tilt = lerpAngle(tilt, 0, blendRate(Double(dt), 10))
+            return
+        }
         if character == .deadpool, state == .jump || state == .fall {
             // One somersault on the ascent; settle upright before touching down.
             tilt = vel.y > 0 ? -CGFloat(stateTime) * 8 * facing : lerpAngle(tilt, 0, blendRate(Double(dt), 12))
@@ -827,6 +878,40 @@ final class Buddy {
     }
 
     /// Snap a web line at a point — used to shoot at a villain.
+    func throwBatarang(at point: CGPoint, scene: SKScene) {
+        guard character == .batman, grounded, !inVehicle, !isGrabbed else { return }
+        face(toward: point.x)
+        blastTarget = point
+        enter(.batarang)
+    }
+
+    func glide(_ world: World) {
+        guard character == .batman, !inVehicle, !isGrabbed else { return }
+        if grounded { jump(world) }
+        else { vel = CGPoint(x: facing * 190, y: -50); enter(.glide) }
+    }
+
+    /// The vehicle director owns position until Batman steps out.
+    func vehicleControl(at point: CGPoint, seated: Bool) {
+        inVehicle = true
+        cancelDrag()
+        pos = point
+        surface = .floor; up = CGPoint(x: 0, y: 1)
+        vel = .zero; grounded = true
+        rig.root.position = point; rig.root.zRotation = 0
+        rig.root.isHidden = seated
+        if !seated { rig.apply(Motion.batmanWalk(CGFloat(point.x / 70))) }
+    }
+
+    func leaveVehicle(_ world: World, at x: CGFloat) {
+        inVehicle = false
+        rig.root.isHidden = false
+        surface = .floor; up = CGPoint(x: 0, y: 1)
+        pos = CGPoint(x: world.clampX(x), y: world.floorY + reach)
+        vel = .zero; grounded = true; tilt = 0
+        enter(.stand)
+    }
+
     func pistolShot(at point: CGPoint, scene: SKScene) {
         guard character == .deadpool, grounded, currentState != .grabbed else { return }
         face(toward: point.x)
@@ -894,18 +979,18 @@ final class Buddy {
         let ly = local.y
         let halfWidth = 19 * scale
         let bottom = -(Rig.footReach + 8) * scale
-        let top = (Rig.headReach + 6) * scale
+        let top = (Rig.headReach + (character == .batman ? 18 : 6)) * scale
         return abs(lx) <= halfWidth && ly >= bottom && ly <= top
     }
 
     /// True when the overlay window should accept mouse events (everything else is
     /// handed back to the app underneath).
     func isInteractive(withCursor p: CGPoint) -> Bool {
-        pressing || isGrabbed || state == .grabbed || hitTest(p)
+        !inVehicle && (pressing || isGrabbed || state == .grabbed || hitTest(p))
     }
 
     func mouseDown(at p: CGPoint, clickCount: Int, scene: SKScene) {
-        guard hitTest(p) else { return }
+        guard !inVehicle, hitTest(p) else { return }
         pressing = true
         isGrabbed = false
         dragMoved = 0

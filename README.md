@@ -2,7 +2,7 @@
 
 A tiny superhero who lives on your Mac desktop.
 
-Use **Choose Buddy → Spider-Man / Deadpool** in the shield menu to switch characters.
+Use **Choose Buddy → Spider-Man / Deadpool / Batman** in the shield menu to switch characters.
 Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
 Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
@@ -190,3 +190,27 @@ standing on and treats that edge's outward normal as *his* up vector. That singl
 idea gives wall walking, crawling over the ceiling and walking around corners, while
 still allowing normal projectile jumps and a rope-constraint web swing
 (`|p − anchor| ≤ ropeLength`, with the radial velocity removed each step).
+
+## Batman and the Batmobile
+
+Select **Batman** in **Choose Buddy**. His cowl, animated scalloped cape, bat emblem
+and utility belt accompany a deliberate patrol walk, Batarang pose, punch/kick combo,
+grappling cable and cape glide. He does not shoot webs or cling upside down.
+
+Batman’s menu adds **Throw Batarang** (⌘B), **Combat combo** (⌘K), **Grapple** (⌘G),
+**Glide** (⌘L), **Summon Batmobile**, **Enter & drive Batmobile** (⌘M), and **Dismiss
+Batmobile**. Click him to scan the area and flip a Batarang. He occasionally does
+this during a patrol, or takes an automatic Batmobile ride.
+
+The compact black, finned Batmobile arrives along the bottom edge, parks, opens its
+canopy while Batman boards, drives with rotating wheels/headlights/exhaust/boost,
+then parks so he can step out before it leaves. Pause freezes the ride. Changing
+character/display/size or resetting safely dismisses it. Fighting waits until he
+has left the car.
+
+His enemies are **Joker** (gag bombs), **Harley Quinn** (bouncing approach and mallet),
+**Bane** (heavy charges), and **Mr. Freeze** (ice bolts). They are stylized procedural
+interpretations using the existing battle system.
+
+Run `./.build/simcheck --batman` after `make check` to exercise his movement, all four
+villains, grappling/gliding, the full vehicle trip, pause and vehicle cleanup.

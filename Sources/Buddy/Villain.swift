@@ -168,7 +168,9 @@ final class Villain {
         }
 
         switch state {
-        case .entrance, .windUp, .defeated, .gone:
+        case .windUp:
+            if stateTime > stateDuration { enter(.attack) }
+        case .entrance, .defeated, .gone:
             if state == .defeated, stateTime > stateDuration { enter(.flee) }
 
         case .land:
@@ -244,8 +246,9 @@ final class Villain {
         let target = targetPose()
         currentPose = Pose.blend(currentPose, target, blendRate(dt, 15))
         rig.apply(currentPose)
+        rig.animateCostume(time: CGFloat(animTime), gliding: false)
         rig.facing = facing
-        rig.root.position = pos
+        rig.root.position = pos + (skin.costume == .harley && state == .approach ? CGPoint(x: 0, y: abs(sin(CGFloat(animTime) * 12)) * 5) : .zero)
         rig.root.zRotation = flightTilt()
         return connected
     }
@@ -295,6 +298,14 @@ final class Villain {
         bolt.strokeColor = SKColor(srgbRed: 0.75, green: 0.95, blue: 0.4, alpha: 1)
         bolt.lineWidth = 2
         bolt.glowWidth = 3
+        if skin.costume == .freeze {
+            bolt.fillColor = .cyan; bolt.strokeColor = .white
+        } else if skin.costume == .joker {
+            bolt.fillColor = SKColor(srgbRed: 0.3, green: 0.9, blue: 0.1, alpha: 1)
+            bolt.strokeColor = .purple
+            let fuse = SKShapeNode(rect: CGRect(x: -1, y: 4, width: 2, height: 5))
+            fuse.fillColor = .orange; fuse.strokeColor = .clear; bolt.addChild(fuse)
+        }
         bolt.position = from
         bolt.zPosition = 88
         scene.addChild(bolt)
@@ -354,8 +365,10 @@ final class Villain {
         case .approach:
             return Motion.walk(CGFloat(animTime), speed: 1.15)
         case .windUp:
+            if skin.costume == .harley { return Motion.deadpoolSlash(CGFloat(stateTime / stateDuration) * 0.2) }
             return Motion.punch(clampf(CGFloat(stateTime / stateDuration) * 0.32, 0, 1))
         case .attack:
+            if skin.costume == .harley { return Motion.deadpoolSlash(0.2 + CGFloat(stateTime / stateDuration) * 0.5) }
             if skin.archetype == .shooter {
                 return Motion.shootWeb(Swift.min(CGFloat(stateTime), 0.2))
             }

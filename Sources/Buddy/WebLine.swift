@@ -11,6 +11,7 @@ final class WebLine: SKNode {
     private let core = SKShapeNode()
     private let splat = SKShapeNode()
 
+    private var cable = false
     private var shootT: CGFloat = 0
     private let shootDuration: CGFloat = 0.12
     private var shootTo = CGPoint.zero
@@ -38,7 +39,10 @@ final class WebLine: SKNode {
 
     required init?(coder: NSCoder) { fatalError("unused") }
 
-    func shoot(from: CGPoint, to: CGPoint) {
+    func shoot(from: CGPoint, to: CGPoint, cable: Bool = false) {
+        self.cable = cable
+        core.strokeColor = cable ? SKColor(white: 0.65, alpha: 1) : Palette.thread
+        glow.alpha = cable ? 0 : 1
         shootTo = to
         tipPoint = from
         shootT = 0
@@ -49,7 +53,7 @@ final class WebLine: SKNode {
 
     func attach() {
         phase = .attached
-        drawSplat(at: shootTo)
+        if !cable { drawSplat(at: shootTo) }
     }
 
     func release() {

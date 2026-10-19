@@ -121,6 +121,51 @@ enum Motion {
         return p
     }
 
+    static func batmanIdle(_ t: CGFloat) -> Pose {
+        var p = idle(t)
+        p.armNear = 0.85; p.foreNear = 2.0
+        p.armFar = -0.85; p.foreFar = -2.0
+        p.head = -0.08 + sin(t * 0.7) * 0.09
+        return p
+    }
+
+    static func batmanWalk(_ t: CGFloat) -> Pose {
+        var p = walk(t * 0.8)
+        p.torso = 0.16; p.head = -0.16
+        p.foreNear = 0.5; p.foreFar = 0.5
+        return p
+    }
+
+    static func batmanGlide(_ t: CGFloat) -> Pose {
+        var p = Pose()
+        p.armNear = 1.65; p.armFar = -1.65
+        p.foreNear = 0.12; p.foreFar = -0.12
+        p.thighNear = 0.3; p.thighFar = -0.2
+        p.shinNear = -0.45; p.shinFar = -0.3
+        p.torso = 0.18; p.head = -0.15
+        p.hip.y = sin(t * 3) * 0.6
+        return p
+    }
+
+    static func batmanThrow(_ t: CGFloat) -> Pose {
+        var ready = batmanIdle(0)
+        ready.armNear = 2.6; ready.foreNear = 1.2; ready.torso = -0.2
+        var release = ready
+        release.armNear = 1.5; release.foreNear = 0.05; release.torso = 0.35
+        var follow = release
+        follow.armNear = 0.7; follow.torso = 0.15
+        return Pose.timeline([ready, ready, release, follow, batmanIdle(0)], t)
+    }
+
+    static func batmanCombo(_ t: CGFloat) -> Pose {
+        var jab = punch(0.5)
+        jab.armFar = 1.4; jab.foreFar = 0.2
+        var kick = jab
+        kick.armNear = -0.4; kick.foreNear = 1.4
+        kick.thighNear = 1.6; kick.shinNear = -0.15; kick.torso = -0.25
+        return Pose.timeline([batmanIdle(0), punch(0.25), jab, kick, batmanIdle(0)], t)
+    }
+
     // MARK: Locomotion
 
     static func walk(_ t: CGFloat, speed: CGFloat = 1) -> Pose {

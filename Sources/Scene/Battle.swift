@@ -23,6 +23,7 @@ final class Battle {
     // MARK: Frame
 
     func update(dt: TimeInterval, world: World, scene: SKScene, buddy: Buddy) {
+        guard !buddy.inVehicle else { return }
         phaseTime += dt
 
         switch phase {
@@ -60,6 +61,10 @@ final class Battle {
                     FX.text("MISS!", at: v.pos + CGPoint(x: 0, y: v.reach + 20), in: scene)
                 } else {
                     buddy.takeHit(from: v.pos, scene: scene)
+                    if v.skin.costume == .freeze {
+                        FX.text("ICE!", at: buddy.pos + CGPoint(x: 0, y: 30), in: scene, color: .cyan)
+                        FX.hitSpark(at: buddy.pos, in: scene)
+                    }
                     FX.text("POW!", at: CGPoint(x: (v.pos.x + buddy.pos.x) / 2, y: buddy.pos.y + buddy.reach + 18),
                             in: scene)
                 }
@@ -71,7 +76,18 @@ final class Battle {
             if buddyCooldown <= 0, buddy.currentState != .fall, buddy.currentState != .grabbed {
                 let dx = abs(v.pos.x - buddy.pos.x)
                 let overhead = v.pos.y - buddy.pos.y > 70
-                if buddy.character == .deadpool {
+                if buddy.character == .batman {
+                    if buddy.grounded, buddy.currentState != .batarang, buddy.currentState != .punch {
+                        if !overhead, dx < 128 {
+                            buddy.punchAt(v.pos, scene: scene)
+                            buddyCooldown = 1.4
+                        } else {
+                            buddy.throwBatarang(at: v.pos, scene: scene)
+                            buddyCooldown = 1.3
+                        }
+                        registerHit(on: v, from: buddy.pos, world: world, scene: scene, buddy: buddy)
+                    }
+                } else if buddy.character == .deadpool {
                     if buddy.grounded, buddy.currentState != .punch, buddy.currentState != .pistolShot {
                         if !overhead, dx < 128 {
                             buddy.punchAt(v.pos, scene: scene)
@@ -146,7 +162,7 @@ final class Battle {
 
     @discardableResult
     func summon(world: World, scene: SKScene, buddy: Buddy, skin forced: Skin? = nil) -> Bool {
-        guard phase == .idle else { return false }
+        guard phase == .idle, !buddy.inVehicle else { return false }
         let skin = forced ?? Skin.randomVillain(for: buddy.character)
         lastOpponent = skin.name
         let v = Villain(skin: skin)

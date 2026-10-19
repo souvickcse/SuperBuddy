@@ -12,6 +12,7 @@ enum Headgear {
     case mane       // Kraven
     case helmet
     case skull
+    case cowl, greenHair, jester, respirator
 }
 
 /// What is strapped to their back.
@@ -32,6 +33,8 @@ enum VillainArchetype {
 
 /// Everything that makes one character look different from another. The buddy uses the
 /// default skin, so his appearance is unchanged; villains are just other skins.
+enum Costume { case plain, batman, joker, harley, bane, freeze }
+
 struct Skin {
     var name = "Spider-Man"
 
@@ -54,6 +57,7 @@ struct Skin {
     var archetype: VillainArchetype = .brawler
 
     var deadpoolDetails = false
+    var costume: Costume = .plain
 
     static let buddy = Skin()
     static let deadpool = Skin(name: "Deadpool",
@@ -63,6 +67,32 @@ struct Skin {
         limbDark: SKColor(srgbRed: 0.36, green: 0.03, blue: 0.05, alpha: 1),
         webbing: false, emblem: false, eyeScale: 0.78,
         backGear: .swords, deadpoolDetails: true)
+
+    static let batman = Skin(name: "Batman",
+        suit: SKColor(white: 0.3, alpha: 1), suitDark: SKColor(white: 0.12, alpha: 1),
+        limb: SKColor(white: 0.18, alpha: 1), limbDark: SKColor(white: 0.09, alpha: 1),
+        webbing: false, emblem: false, headgear: .cowl, eyeScale: 0.65, costume: .batman)
+
+    static let batmanVillains: [Skin] = [
+        Skin(name: "Joker", suit: SKColor(srgbRed: 0.48, green: 0.19, blue: 0.64, alpha: 1),
+             suitDark: SKColor(srgbRed: 0.23, green: 0.08, blue: 0.35, alpha: 1),
+             limb: SKColor(srgbRed: 0.37, green: 0.16, blue: 0.51, alpha: 1),
+             limbDark: SKColor(white: 0.12, alpha: 1), webbing: false, emblem: false,
+             headgear: .greenHair, fightSpeed: 1.2, archetype: .shooter, costume: .joker),
+        Skin(name: "Harley Quinn", suit: Palette.red, suitDark: Palette.redDark,
+             limb: SKColor(white: 0.12, alpha: 1), limbDark: SKColor(white: 0.06, alpha: 1),
+             webbing: false, emblem: false, headgear: .jester, fightSpeed: 1.25, costume: .harley),
+        Skin(name: "Bane", suit: SKColor(srgbRed: 0.55, green: 0.4, blue: 0.28, alpha: 1),
+             suitDark: SKColor(srgbRed: 0.33, green: 0.23, blue: 0.16, alpha: 1),
+             limb: SKColor(white: 0.15, alpha: 1), limbDark: SKColor(white: 0.08, alpha: 1),
+             webbing: false, emblem: false, headgear: .respirator,
+             bodyScale: 1.35, fightSpeed: 0.95, archetype: .charger, costume: .bane),
+        Skin(name: "Mr. Freeze", suit: SKColor(srgbRed: 0.18, green: 0.48, blue: 0.72, alpha: 1),
+             suitDark: SKColor(srgbRed: 0.09, green: 0.23, blue: 0.4, alpha: 1),
+             limb: SKColor(srgbRed: 0.38, green: 0.63, blue: 0.8, alpha: 1),
+             limbDark: SKColor(srgbRed: 0.18, green: 0.34, blue: 0.5, alpha: 1),
+             webbing: false, emblem: false, headgear: .bowl, archetype: .shooter, costume: .freeze)
+    ]
 
     // MARK: The rogues gallery
 
@@ -192,7 +222,7 @@ struct Skin {
     ]
 
     static func villains(for character: BuddyCharacter) -> [Skin] {
-        character == .deadpool ? deadpoolVillains : villains
+        character == .batman ? batmanVillains : (character == .deadpool ? deadpoolVillains : villains)
     }
 
     static func randomVillain(for character: BuddyCharacter = .spider) -> Skin {
@@ -203,7 +233,7 @@ struct Skin {
 
 /// Stable preference IDs are independent of the names shown in the menu.
 enum BuddyCharacter: String, CaseIterable {
-    case spider, deadpool
-    var title: String { self == .spider ? "Spider-Man" : "Deadpool" }
-    var skin: Skin { self == .spider ? .buddy : .deadpool }
+    case spider, deadpool, batman
+    var title: String { self == .batman ? "Batman" : (self == .spider ? "Spider-Man" : "Deadpool") }
+    var skin: Skin { self == .batman ? .batman : (self == .spider ? .buddy : .deadpool) }
 }

@@ -35,6 +35,7 @@ struct SimCheck {
         buddy.selectCharacter(.spider)
         precondition(!buddy.rig.skin.deadpoolDetails && buddy.rig.root.parent === scene)
         if CommandLine.arguments.contains("--deadpool") { buddy.selectCharacter(.deadpool) }
+        if CommandLine.arguments.contains("--batman") { buddy.selectCharacter(.batman) }
         print("character            : \(buddy.character.title)")
 
         let dt = 1.0 / 60.0
@@ -145,6 +146,7 @@ struct SimCheck {
         }
         if swings < 3 { failures.append("barely used webs (\(swings) swings)") }
         }
+        if buddy.character == .batman && swings > 0 { failures.append("Batman used web swinging") }
         if landings < 3 { failures.append("barely landed like a hero (\(landings))") }
         if minY < -1 { failures.append("fell below the floor") }
         if maxSpeed > 4000 { failures.append("unstable velocity") }
@@ -158,7 +160,7 @@ struct SimCheck {
         if upsideDownFrames < 40 { failures.append("hardly ever rested upside down (\(upsideDownFrames) frames)") }
         if uprightOnWall > 0 { failures.append("stood upright on a wall for \(uprightOnWall) frames") }
         if crawlFrames < 300 { failures.append("hardly ever crawled on a wall (\(crawlFrames) frames)") }
-        } else {
+        } else if buddy.character == .deadpool {
             if swings != 0 || zips != 0 || upsideDownFrames != 0 { failures.append("Deadpool used Spider-Man traversal") }
             if surfacesSeen != ["floor"] { failures.append("Deadpool clung to a wall or ceiling") }
         }
@@ -233,7 +235,7 @@ struct SimCheck {
                 villainSeen = true
                 if v.health < lastHealth { lastHealth = v.health }
             }
-            if lastState != buddy.currentState && (buddy.currentState == .webBlast || buddy.currentState == .pistolShot) { blasts += 1 }
+            if lastState != buddy.currentState && (buddy.currentState == .webBlast || buddy.currentState == .pistolShot || buddy.currentState == .batarang) { blasts += 1 }
             if lastState != .punch && buddy.currentState == .punch { punches += 1 }
             lastState = buddy.currentState
             if villainSeen && !battle.isActive { battleOver = true; break }
@@ -256,11 +258,22 @@ struct SimCheck {
         // ---- one fight per villain archetype, so every fighting style is exercised
         var archetypeReport: [String] = []
         let roster = Skin.villains(for: buddy.character)
-        let opponents = buddy.character == .deadpool ? roster : ["brawler", "charger", "flyer", "shooter"].compactMap { name in
+        let opponents = buddy.character != .spider ? roster : ["brawler", "charger", "flyer", "shooter"].compactMap { name in
             roster.first { "\($0.archetype)" == name }
         }
         for skin in opponents {
             let archetype = "\(skin.archetype)"
+            // An uninterrupted opponent must progress from its telegraph to an attack.
+            let attacker = Villain(skin: skin)
+            attacker.spawn(world: world, near: world.bounds.midX, fromLeft: true, scale: buddy.scale)
+            scene.addChild(attacker.rig.root)
+            var attacks = 0
+            for _ in 0..<1200 {
+                if attacker.update(dt: dt, world: world, scene: scene,
+                                   opponent: CGPoint(x: world.bounds.midX, y: world.floorY + buddy.reach)) { attacks += 1 }
+            }
+            attacker.remove()
+            if attacks == 0 { failures.append("\(skin.name) never completed an attack") }
             buddy.place(world)
             let b = Battle()
             let started = b.summon(world: world, scene: scene, buddy: buddy, skin: skin)
@@ -286,6 +299,45 @@ struct SimCheck {
             if !buddy.pos.x.isFinite || !buddy.pos.y.isFinite {
                 failures.append("\(archetype): buddy went non-finite")
             }
+        }
+        if buddy.character == .batman {
+            // Grapple should draw a cable, release it, and transition into a glide.
+            buddy.place(world)
+            buddy.webZip(world, scene, toCeiling: true)
+            var sawCable = false, sawGlide = false
+            for _ in 0..<900 {
+                buddy.update(dt: dt, world: world, scene: scene, web: web)
+                sawCable = sawCable || web.phase != .idle
+                sawGlide = sawGlide || buddy.currentState == .glide
+            }
+            if !sawCable || !sawGlide { failures.append("Batman grapple/glide sequence failed") }
+            // A vehicle trip must board, drive, return the buddy, and remove the car.
+            buddy.place(world)
+            let car = Batmobile()
+            if !car.summon(world: world, scene: scene, buddy: buddy, drive: true) { failures.append("Batmobile summon failed") }
+            var boarded = false, drove = false
+            for _ in 0..<2400 {
+                car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
+                buddy.update(dt: dt, world: world, scene: scene, web: web)
+                boarded = boarded || buddy.inVehicle
+                drove = drove || car.phase == .driving
+                if !car.active { break }
+            }
+            if !boarded || !drove || car.active || buddy.inVehicle || buddy.rig.root.isHidden {
+                failures.append("Batmobile trip did not board/drive/exit/clean up")
+            }
+            // Pause must freeze the car; cancel/switch must restore Batman.
+            buddy.place(world)
+            _ = car.summon(world: world, scene: scene, buddy: buddy, drive: true)
+            for _ in 0..<600 { car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false) }
+            buddy.paused = true
+            let parkedAt = car.root.position
+            for _ in 0..<120 { car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false) }
+            if car.root.position != parkedAt { failures.append("Batmobile moved while paused") }
+            buddy.paused = false
+            car.cancel(world: world, buddy: buddy)
+            if buddy.inVehicle || buddy.rig.root.isHidden || car.root.parent != nil { failures.append("Batmobile cancel left hidden buddy or car") }
+            print("Batmobile            : boarded=\(boarded), drove=\(drove), cleaned up=\(!car.active)")
         }
         print("archetypes           : " + archetypeReport.joined(separator: ", "))
 

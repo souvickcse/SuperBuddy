@@ -196,4 +196,13 @@ enum FX {
         streak.run(.sequence([.group([.moveBy(x: facing * 90, y: 0, duration: 0.18), .fadeOut(withDuration: 0.18)]), .removeFromParent()]))
     }
 
+    static func batarang(from origin: CGPoint, to target: CGPoint, in scene: SKScene) {
+        let bat = SKShapeNode(path: Rig.batShape())
+        bat.setScale(0.65); bat.position = origin
+        bat.fillColor = SKColor(white: 0.65, alpha: 1); bat.strokeColor = Palette.ink
+        bat.zPosition = 115; scene.addChild(bat)
+        bat.run(.sequence([.group([.move(to: target, duration: 0.35), .rotate(byAngle: .pi * 4, duration: 0.35)]),
+                           .group([.move(to: origin, duration: 0.35), .rotate(byAngle: .pi * 4, duration: 0.35)]), .removeFromParent()]))
+    }
+
 }

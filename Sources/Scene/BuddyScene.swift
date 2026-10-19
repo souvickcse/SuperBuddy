@@ -7,6 +7,7 @@ final class BuddyScene: SKScene {
     let buddy = Buddy()
     let web = WebLine()
     let battle = Battle()
+    let batmobile = Batmobile()
     var world = World()
 
     private var lastTime: TimeInterval = 0
@@ -33,6 +34,7 @@ final class BuddyScene: SKScene {
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         world.bounds = CGRect(origin: .zero, size: size)
+        batmobile.cancel(world: world, buddy: buddy)
         buddy.cursor = cursorInScene()
         buddy.keepInside(world)
     }
@@ -45,6 +47,7 @@ final class BuddyScene: SKScene {
         if dt < 0 { dt = 0 }
         if dt > 0.05 { dt = 0.05 }
         buddy.cursor = cursorInScene()
+        batmobile.update(dt: dt, world: world, scene: self, buddy: buddy)
         buddy.update(dt: dt, world: world, scene: self, web: web)
         if !frozen { battle.update(dt: dt, world: world, scene: self, buddy: buddy) }
     }
@@ -94,6 +97,7 @@ final class BuddyScene: SKScene {
     // MARK: Commands (menu bar)
 
     func selectCharacter(_ character: BuddyCharacter) {
+        batmobile.cancel(world: world, buddy: buddy)
         buddy.selectCharacter(character)
         UserDefaults.standard.set(character.rawValue, forKey: "buddyCharacter")
     }
@@ -110,25 +114,42 @@ final class BuddyScene: SKScene {
         buddy.pistolShot(at: buddy.pos + CGPoint(x: buddy.facing * 240, y: 0), scene: self)
     }
 
-    func commandDance() { buddy.dance(self) }
+    func commandBatarang() {
+        guard !frozen, !buddy.inVehicle else { return }
+        buddy.throwBatarang(at: buddy.pos + CGPoint(x: buddy.facing * 230, y: 15), scene: self)
+    }
+    func commandCombo() {
+        guard buddy.character == .batman, buddy.grounded, !buddy.inVehicle, !frozen,
+              buddy.currentState != .grabbed else { return }
+        buddy.punchAt(buddy.pos + CGPoint(x: buddy.facing * 80, y: 0), scene: self)
+    }
+    func commandGrapple() {
+        guard buddy.character == .batman, !buddy.inVehicle, !frozen, buddy.currentState != .grabbed else { return }
+        buddy.webZip(world, self, toCeiling: true)
+    }
+    func commandGlide() { if !frozen { buddy.glide(world) } }
+    func commandCar(drive: Bool) { _ = batmobile.summon(world: world, scene: self, buddy: buddy, drive: drive) }
+    func commandDismissCar() { if !frozen { batmobile.dismiss(world: world, buddy: buddy) } }
+
+    func commandDance() { if !buddy.inVehicle { buddy.dance(self) } }
 
     func commandJump() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         buddy.jump(world)
     }
 
     func commandSwing() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         buddy.swing(world, self)
     }
 
     func commandHang() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         buddy.hangFromWeb(world, self)
     }
 
     func commandHangUpsideDown() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         if buddy.surface == .ceiling {
             buddy.hangUpsideDown(world, self)
         } else {
@@ -137,30 +158,35 @@ final class BuddyScene: SKScene {
     }
 
     func commandZipUp() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         buddy.webZip(world, self, toCeiling: true)
     }
 
     func commandZipSide() {
-        guard buddy.currentState != .grabbed else { return }
+        guard !buddy.inVehicle, buddy.currentState != .grabbed else { return }
         buddy.webZip(world, self, toCeiling: false)
     }
 
     func commandComeToCursor() {
+        batmobile.cancel(world: world, buddy: buddy)
         buddy.comeTo(cursorInScene(), world: world, scene: self)
     }
 
     @discardableResult
     func commandSummonVillain(skin: Skin? = nil) -> Bool {
-        guard !battle.isActive, buddy.currentState != .grabbed else { return false }
+        guard !buddy.inVehicle, !battle.isActive, buddy.currentState != .grabbed else { return false }
+        batmobile.cancel(world: world, buddy: buddy)
         return battle.summon(world: world, scene: self, buddy: buddy, skin: skin)
     }
 
     func commandReset() {
+        batmobile.cancel(world: world, buddy: buddy)
+        buddy.cancelDrag()
         buddy.place(world)
     }
 
     func setBuddyScale(_ s: CGFloat) {
+        batmobile.cancel(world: world, buddy: buddy)
         buddy.setScale(s)
         world.reach = buddy.reach
         buddy.keepInside(world)

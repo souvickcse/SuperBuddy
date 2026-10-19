@@ -44,6 +44,9 @@ final class Rig {
     private var legNear: Limb!
     private var legFar: Limb!
 
+    private let cape = SKShapeNode()
+    private let heldBat = SKNode()
+    private let mallet = SKNode()
     private var heldSword = SKNode()
     private var heldPistol = SKNode()
 
@@ -147,6 +150,64 @@ final class Rig {
         armNear.pivot.zPosition = 9
         upper.addChild(armNear.pivot)
         if skin.deadpoolDetails { buildWeapons() }
+        if skin.costume == .batman { buildBatman() }
+        if skin.costume == .harley { buildMallet() }
+    }
+
+    static func batShape() -> CGPath {
+        let path = CGMutablePath()
+        let points: [CGPoint] = [CGPoint(x: -12, y: 5), CGPoint(x: -8, y: -4), CGPoint(x: -4, y: -1),
+            CGPoint(x: 0, y: -6), CGPoint(x: 4, y: -1), CGPoint(x: 8, y: -4), CGPoint(x: 12, y: 5),
+            CGPoint(x: 4, y: 2), CGPoint(x: 2, y: 5), CGPoint(x: 0, y: 3), CGPoint(x: -2, y: 5), CGPoint(x: -4, y: 2)]
+        path.addLines(between: points); path.closeSubpath()
+        return path
+    }
+
+    private func buildBatman() {
+        cape.fillColor = SKColor(white: 0.065, alpha: 1)
+        cape.strokeColor = SKColor(white: 0.25, alpha: 1)
+        cape.lineWidth = 0.8; cape.zPosition = -2
+        upper.addChild(cape)
+        let badge = SKShapeNode(ellipseOf: CGSize(width: 16, height: 9))
+        badge.position = CGPoint(x: 0, y: 12); badge.zPosition = 6
+        badge.fillColor = SKColor(srgbRed: 1, green: 0.76, blue: 0.15, alpha: 1)
+        badge.strokeColor = skin.ink
+        let bat = SKShapeNode(path: Rig.batShape())
+        bat.setScale(0.52); bat.fillColor = skin.ink; bat.strokeColor = .clear
+        badge.addChild(bat); upper.addChild(badge)
+        let belt = SKShapeNode(rectOf: CGSize(width: 17, height: 4))
+        belt.fillColor = badge.fillColor; belt.strokeColor = skin.ink; belt.zPosition = 7
+        hipNode.addChild(belt)
+        let batarang = SKShapeNode(path: Rig.batShape())
+        batarang.setScale(0.5); batarang.fillColor = SKColor(white: 0.55, alpha: 1)
+        batarang.strokeColor = skin.ink
+        heldBat.addChild(batarang); armNear.tip.addChild(heldBat)
+        heldBat.isHidden = true
+        animateCostume(time: 0, gliding: false)
+    }
+
+    private func buildMallet() {
+        let handle = SKShapeNode(rect: CGRect(x: -1, y: -4, width: 2, height: 20))
+        handle.fillColor = SKColor.brown; handle.strokeColor = skin.ink
+        mallet.addChild(handle)
+        let head = SKShapeNode(rectOf: CGSize(width: 15, height: 10), cornerRadius: 2)
+        head.position.y = 17; head.fillColor = Palette.redDark; head.strokeColor = skin.ink
+        mallet.addChild(head); armNear.tip.addChild(mallet)
+    }
+
+    func animateCostume(time: CGFloat, gliding: Bool, batarang: Bool = false) {
+        guard skin.costume == .batman else { return }
+        heldBat.isHidden = !batarang
+        let w: CGFloat = gliding ? 34 : 17
+        let flutter = sin(time * 5) * (gliding ? 3 : 2)
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: -7, y: 20))
+        path.addLine(to: CGPoint(x: -w - 8, y: -12 + flutter))
+        path.addQuadCurve(to: CGPoint(x: -w / 2, y: -12), control: CGPoint(x: -w / 2 - 2, y: -6))
+        path.addQuadCurve(to: CGPoint(x: 0, y: -16 + flutter), control: CGPoint(x: -2, y: -7))
+        path.addQuadCurve(to: CGPoint(x: w, y: -12), control: CGPoint(x: 8, y: -5))
+        path.addLine(to: CGPoint(x: 7, y: 20))
+        path.closeSubpath(); cape.path = path
     }
 
     private func buildWeapons() {
@@ -174,7 +235,7 @@ final class Rig {
 
     private func buildHead() {
         let head = SKShapeNode(rect: CGRect(x: -11, y: -10, width: 22, height: 20), cornerRadius: 8.5)
-        head.fillColor = skin.suit
+        head.fillColor = skin.costume == .batman || skin.costume == .bane ? skin.ink : (skin.costume == .joker || skin.costume == .harley ? SKColor(white: 0.93, alpha: 1) : skin.suit)
         head.strokeColor = skin.ink
         head.lineWidth = 1.6
         head.zPosition = 0
@@ -201,6 +262,43 @@ final class Rig {
     private func buildHeadgear() {
         let ink = skin.ink
         switch skin.headgear {
+        case .cowl:
+            for x: CGFloat in [-8, 8] {
+                let path = CGMutablePath()
+                path.move(to: CGPoint(x: x - 3, y: 6))
+                path.addLine(to: CGPoint(x: x, y: 21))
+                path.addLine(to: CGPoint(x: x + 3, y: 6))
+                path.closeSubpath()
+                let ear = SKShapeNode(path: path)
+                ear.fillColor = ink; ear.strokeColor = ink
+                headNode.addChild(ear)
+            }
+            let jaw = SKShapeNode(rect: CGRect(x: -6, y: -8, width: 13, height: 5), cornerRadius: 2)
+            jaw.fillColor = SKColor(srgbRed: 0.8, green: 0.62, blue: 0.43, alpha: 1)
+            jaw.strokeColor = .clear; jaw.zPosition = 2
+            headNode.addChild(jaw)
+        case .greenHair, .jester:
+            for x: CGFloat in [-8, 0, 8] {
+                let tuft = SKShapeNode(ellipseOf: CGSize(width: 9, height: 9))
+                tuft.position = CGPoint(x: x, y: 10 + (x == 0 ? 2 : 0))
+                tuft.fillColor = skin.headgear == .greenHair ? SKColor(srgbRed: 0.2, green: 0.8, blue: 0.18, alpha: 1) : (x < 0 ? Palette.red : ink)
+                tuft.strokeColor = ink; tuft.zPosition = 2
+                headNode.addChild(tuft)
+            }
+            let smile = SKShapeNode(rect: CGRect(x: -6, y: -7, width: 13, height: 2), cornerRadius: 1)
+            smile.fillColor = Palette.red; smile.strokeColor = .clear; smile.zPosition = 3
+            headNode.addChild(smile)
+        case .respirator:
+            let mask = SKShapeNode(rectOf: CGSize(width: 10, height: 11), cornerRadius: 2)
+            mask.position.y = -3; mask.fillColor = SKColor(white: 0.5, alpha: 1)
+            mask.strokeColor = ink; mask.zPosition = 3
+            headNode.addChild(mask)
+            for x: CGFloat in [-3, 0, 3] {
+                let vent = SKShapeNode(rectOf: CGSize(width: 1, height: 7))
+                vent.position = CGPoint(x: x, y: -3); vent.fillColor = ink
+                vent.strokeColor = .clear; vent.zPosition = 4
+                headNode.addChild(vent)
+            }
         case .helmet:
             let helmet = SKShapeNode(rect: CGRect(x: -13, y: -9, width: 26, height: 23), cornerRadius: 9)
             helmet.fillColor = skin.suitDark

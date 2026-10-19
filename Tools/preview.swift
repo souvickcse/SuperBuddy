@@ -20,10 +20,17 @@ struct Shot {
     var anchor: CGPoint? = nil      // draw a web from the near hand to this offset
     var blink: CGFloat = 0          // 0 open, 1 shut
     var footWeb = false             // draw the line from the ankle instead of the hand
+    var car = false
     var skin: Skin = Skin()         // costume
 }
 
-let shots: [Shot] = Skin.deadpoolVillains.map { Shot(name: $0.name, pose: Motion.idle(0.4), skin: $0) } + [
+let shots: [Shot] = (Skin.batmanVillains + Skin.deadpoolVillains).map { Shot(name: $0.name, pose: Motion.idle(0.4), skin: $0) } + [
+    Shot(name: "Batmobile", pose: .stand, car: true, skin: .batman),
+    Shot(name: "Batman - idle", pose: Motion.batmanIdle(0.5), skin: .batman),
+    Shot(name: "Batman - patrol", pose: Motion.batmanWalk(0.35), skin: .batman),
+    Shot(name: "Batman - glide", pose: Motion.batmanGlide(0.5), skin: .batman),
+    Shot(name: "Batman - Batarang", pose: Motion.batmanThrow(0.3), skin: .batman),
+    Shot(name: "Batman - combo", pose: Motion.batmanCombo(0.7), skin: .batman),
     Shot(name: "Deadpool - idle", pose: Motion.deadpoolIdle(0.4), skin: .deadpool),
     Shot(name: "Deadpool - swagger", pose: Motion.deadpoolWalk(0.34), skin: .deadpool),
     Shot(name: "Deadpool - dance", pose: Motion.deadpoolDance(0.8), skin: .deadpool),
@@ -110,6 +117,7 @@ final class Painter {
             guard let path = shape.path else { return }
             ctx.saveGState()
             ctx.concatenate(t)
+            ctx.beginPath()
             ctx.setAlpha(min(1, shape.alpha))
             ctx.addPath(path)
             if shape.fillColor.alphaComponent > 0.01 {
@@ -124,7 +132,9 @@ final class Painter {
                 ctx.setLineCap(.round)
                 ctx.strokePath()
             }
+            ctx.beginPath()
             ctx.restoreGState()
+            drawChildren(of: shape, transform: t)
 
         case let crop as SKCropNode:
             ctx.saveGState()
@@ -207,11 +217,20 @@ struct PreviewTool {
             rig.scale = rigScale
             rig.facing = shot.facing
             rig.apply(shot.pose)
+            rig.animateCostume(time: 0.5, gliding: shot.name == "Batman - glide", batarang: shot.name == "Batman - Batarang")
             rig.showWeapons(sword: shot.name == "Deadpool - slash", pistol: shot.name == "Deadpool - pistol")
             rig.blink = shot.blink
             rig.root.position = base
             rig.root.zRotation = shot.tilt
             scene.addChild(rig.root)
+            if shot.car {
+                rig.root.isHidden = true
+                let car = Batmobile()
+                car.root.isHidden = false
+                car.root.position = CGPoint(x: base.x, y: origin.y + groundY)
+                car.root.setScale(big ? 2.2 : 1.2)
+                scene.addChild(car.root)
+            }
 
             if let offset = shot.anchor {
                 let line = SKShapeNode()
