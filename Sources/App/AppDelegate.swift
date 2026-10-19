@@ -67,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func apply(screen: NSScreen) {
         guard let window = window, let scene = scene else { return }
         window.setFrame(screen.frame, display: true)
+        scene.batSignal.cancel(buddy: scene.buddy)
         scene.batmobile.cancel(world: scene.world, buddy: scene.buddy)
         scene.resizeWorld(to: screen.frame.size)
         BuddyDebug.log("moved to display \(screen.localizedName) \(screen.frame)")

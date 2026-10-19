@@ -8,6 +8,7 @@ final class BuddyScene: SKScene {
     let web = WebLine()
     let battle = Battle()
     let batmobile = Batmobile()
+    let batSignal = BatSignal()
     var world = World()
 
     private var lastTime: TimeInterval = 0
@@ -34,6 +35,7 @@ final class BuddyScene: SKScene {
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         world.bounds = CGRect(origin: .zero, size: size)
+        batSignal.cancel(buddy: buddy)
         batmobile.cancel(world: world, buddy: buddy)
         buddy.cursor = cursorInScene()
         buddy.keepInside(world)
@@ -49,6 +51,7 @@ final class BuddyScene: SKScene {
         buddy.cursor = cursorInScene()
         batmobile.update(dt: dt, world: world, scene: self, buddy: buddy)
         buddy.update(dt: dt, world: world, scene: self, web: web)
+        batSignal.update(dt: dt, world: world, buddy: buddy)
         if !frozen { battle.update(dt: dt, world: world, scene: self, buddy: buddy) }
     }
 
@@ -97,6 +100,7 @@ final class BuddyScene: SKScene {
     // MARK: Commands (menu bar)
 
     func selectCharacter(_ character: BuddyCharacter) {
+        batSignal.cancel(buddy: buddy)
         batmobile.cancel(world: world, buddy: buddy)
         buddy.selectCharacter(character)
         world.reach = buddy.reach
@@ -123,6 +127,10 @@ final class BuddyScene: SKScene {
     }
     func commandClap() { if !frozen { buddy.thunderclap(self) } }
 
+    func commandBatSignal() {
+        _ = batSignal.start(world: world, scene: self, buddy: buddy)
+    }
+
     func commandBatarang() {
         guard !frozen, !buddy.inVehicle else { return }
         buddy.throwBatarang(at: buddy.pos + CGPoint(x: buddy.facing * 230, y: 15), scene: self)
@@ -137,7 +145,11 @@ final class BuddyScene: SKScene {
         buddy.webZip(world, self, toCeiling: true)
     }
     func commandGlide() { if !frozen { buddy.glide(world) } }
-    func commandCar(drive: Bool) { _ = batmobile.summon(world: world, scene: self, buddy: buddy, drive: drive) }
+    func commandCar(drive: Bool) {
+        guard !frozen else { return }
+        batSignal.cancel(buddy: buddy)
+        _ = batmobile.summon(world: world, scene: self, buddy: buddy, drive: drive)
+    }
     func commandDismissCar() { if !frozen { batmobile.dismiss(world: world, buddy: buddy) } }
 
     func commandDance() { if !buddy.inVehicle { buddy.dance(self) } }
@@ -177,6 +189,7 @@ final class BuddyScene: SKScene {
     }
 
     func commandComeToCursor() {
+        batSignal.cancel(buddy: buddy)
         batmobile.cancel(world: world, buddy: buddy)
         buddy.comeTo(cursorInScene(), world: world, scene: self)
     }
@@ -189,12 +202,14 @@ final class BuddyScene: SKScene {
     }
 
     func commandReset() {
+        batSignal.cancel(buddy: buddy)
         batmobile.cancel(world: world, buddy: buddy)
         buddy.cancelDrag()
         buddy.place(world)
     }
 
     func setBuddyScale(_ s: CGFloat) {
+        batSignal.cancel(buddy: buddy)
         batmobile.cancel(world: world, buddy: buddy)
         buddy.setScale(s)
         world.reach = buddy.reach

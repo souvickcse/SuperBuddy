@@ -21,6 +21,7 @@ struct Shot {
     var blink: CGFloat = 0          // 0 open, 1 shut
     var footWeb = false             // draw the line from the ankle instead of the hand
     var car = false
+    var batSignalTime: TimeInterval? = nil
     var skin: Skin = Skin()         // costume
 }
 
@@ -31,6 +32,9 @@ let shots: [Shot] = (Skin.hulkVillains + Skin.batmanVillains + Skin.deadpoolVill
     Shot(name: "Hulk - smash", pose: Motion.hulkSmash(0.62), skin: .hulk),
     Shot(name: "Hulk - thunderclap", pose: Motion.hulkClap(0.55), skin: .hulk),
     Shot(name: "Hulk - roar", pose: Motion.hulkRoar(0.4), skin: .hulk),
+    Shot(name: "Bat-Signal - spotlight", pose: .stand, batSignalTime: 0.6, skin: .batman),
+    Shot(name: "Bat-Signal - camouflage", pose: .stand, batSignalTime: 3.0, skin: .batman),
+    Shot(name: "Bat-Signal - reveal", pose: .stand, batSignalTime: 5.4, skin: .batman),
     Shot(name: "Batmobile", pose: .stand, car: true, skin: .batman),
     Shot(name: "Batman - idle", pose: Motion.batmanIdle(0.5), skin: .batman),
     Shot(name: "Batman - patrol", pose: Motion.batmanWalk(0.35), skin: .batman),
@@ -100,11 +104,11 @@ final class Painter {
         ctx.restoreGState()
     }
 
-    private func drawChildren(of node: SKNode, transform parent: CGAffineTransform) {
+    private func drawChildren(of node: SKNode, transform parent: CGAffineTransform, opacity: CGFloat = 1) {
         let kids = node.children.sorted { a, b in
             a.zPosition == b.zPosition ? false : a.zPosition < b.zPosition
         }
-        for child in kids { draw(node: child, transform: parent) }
+        for child in kids { draw(node: child, transform: parent, opacity: opacity) }
     }
 
     private func localTransform(_ node: SKNode) -> CGAffineTransform {
@@ -114,9 +118,10 @@ final class Painter {
             .scaledBy(x: node.xScale, y: node.yScale)
     }
 
-    private func draw(node: SKNode, transform parent: CGAffineTransform) {
+    private func draw(node: SKNode, transform parent: CGAffineTransform, opacity: CGFloat) {
         guard !node.isHidden, node.alpha > 0.004 else { return }
         let t = localTransform(node).concatenating(parent)
+        let effectiveAlpha = opacity * node.alpha
 
         switch node {
         case let shape as SKShapeNode:
@@ -124,7 +129,7 @@ final class Painter {
             ctx.saveGState()
             ctx.concatenate(t)
             ctx.beginPath()
-            ctx.setAlpha(min(1, shape.alpha))
+            ctx.setAlpha(min(1, effectiveAlpha))
             ctx.addPath(path)
             if shape.fillColor.alphaComponent > 0.01 {
                 ctx.setFillColor(shape.fillColor.cgColor)
@@ -140,7 +145,7 @@ final class Painter {
             }
             ctx.beginPath()
             ctx.restoreGState()
-            drawChildren(of: shape, transform: t)
+            drawChildren(of: shape, transform: t, opacity: effectiveAlpha)
 
         case let crop as SKCropNode:
             ctx.saveGState()
@@ -153,12 +158,13 @@ final class Painter {
                 // because every draw() call concatenates the full accumulated transform
                 ctx.concatenate(mt.inverted())
             }
-            drawChildren(of: crop, transform: t)
+            drawChildren(of: crop, transform: t, opacity: effectiveAlpha)
             ctx.restoreGState()
 
         case let label as SKLabelNode:
             guard let text = label.text else { return }
             ctx.saveGState()
+            ctx.setAlpha(effectiveAlpha)
             ctx.concatenate(t)
             let font = NSFont(name: label.fontName ?? "Helvetica", size: label.fontSize)
                 ?? NSFont.systemFont(ofSize: label.fontSize)
@@ -182,7 +188,7 @@ final class Painter {
             ctx.restoreGState()
 
         default:
-            drawChildren(of: node, transform: t)
+            drawChildren(of: node, transform: t, opacity: effectiveAlpha)
         }
     }
 }
@@ -229,6 +235,21 @@ struct PreviewTool {
             rig.root.position = base + CGPoint(x: 0, y: shot.skin.costume == .hulk ? Rig.footReach * rigScale * (shot.skin.bodyScale - 1) : 0)
             rig.root.zRotation = shot.tilt
             scene.addChild(rig.root)
+            if let signalTime = shot.batSignalTime {
+                rig.root.isHidden = true
+                let owner = Buddy()
+                owner.selectCharacter(.batman); owner.setScale(big ? 2.1 : 1.4)
+                var world = World()
+                world.bounds = CGRect(x: origin.x + 24, y: origin.y + groundY,
+                                      width: cellW - 48, height: cellH - groundY - 16)
+                world.reach = owner.reach; owner.place(world)
+                scene.addChild(owner.rig.root)
+                owner.rig.root.position = owner.pos
+                owner.rig.apply(Motion.batmanIdle(0))
+                let signal = BatSignal()
+                _ = signal.start(world: world, scene: scene, buddy: owner)
+                signal.update(dt: signalTime, world: world, buddy: owner)
+            }
             if shot.car {
                 rig.root.isHidden = true
                 let car = Batmobile()

@@ -9,7 +9,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private var characterMenu: NSMenu?
 
     private enum Tag: Int {
-        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, summonCar, driveCar, dismissCar, smash, clap
+        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, summonCar, driveCar, dismissCar, smash, clap, batSignal
         case sizeSmall = 100, sizeMedium, sizeLarge
     }
 
@@ -35,6 +35,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Fire pistol", .pistol, "f"))
         menu.addItem(make("Hulk smash!", .smash, "k"))
         menu.addItem(make("Thunderclap", .clap, "t"))
+        menu.addItem(make("Bat-Signal & bat camouflage", .batSignal, "e"))
         menu.addItem(make("Throw Batarang", .batarang, "b"))
         menu.addItem(make("Combat combo", .combo, "k"))
         menu.addItem(make("Grapple", .grapple, "g"))
@@ -99,7 +100,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             if [Tag.swing, .hang, .zipUp, .zipSide, .restUpsideDown].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = isDeadpool || isBatman || isHulk
             }
-            if [Tag.batarang, .combo, .grapple, .glide, .summonCar, .driveCar, .dismissCar].map({ $0.rawValue }).contains(item.tag) {
+            if [Tag.batarang, .combo, .grapple, .glide, .summonCar, .driveCar, .dismissCar, .batSignal].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = !isBatman
             }
             if [Tag.smash, .clap].map({ $0.rawValue }).contains(item.tag) { item.isHidden = !isHulk }
@@ -169,6 +170,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .pistol: BuddyCenter.shared.scene?.commandPistol()
         case .smash: BuddyCenter.shared.scene?.commandSmash()
         case .clap: BuddyCenter.shared.scene?.commandClap()
+        case .batSignal: BuddyCenter.shared.scene?.commandBatSignal()
         case .batarang: BuddyCenter.shared.scene?.commandBatarang()
         case .combo: BuddyCenter.shared.scene?.commandCombo()
         case .grapple: BuddyCenter.shared.scene?.commandGrapple()

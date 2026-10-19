@@ -229,3 +229,13 @@ His opponents are **Abomination**, **Red Hulk**, **Leader**, and **Absorbing Man
 He closes in for a smash or uses a thunderclap shockwave from a distance.
 `./.build/simcheck --hulk` checks his movement, attacks, size/hit area and all four
 opponents after `make check`.
+
+## Bat-Signal and bat camouflage
+
+With Batman selected, use **Bat-Signal & bat camouflage** (⌘E). A golden spotlight
+projects the bat emblem into the sky; 42 animated bats fly in, swirl around Batman,
+conceal him for two seconds, then scatter as he reappears. The swarm follows him
+as he moves. This is a visual camouflage effect, not an invulnerability power.
+Pause freezes the sequence. Reset, character/size/display changes, dragging or
+boarding the Batmobile safely reveal him and clean up the effect. Repeated clicks
+while it is playing do not create overlapping swarms.

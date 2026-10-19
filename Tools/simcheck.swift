@@ -322,6 +322,59 @@ struct SimCheck {
             }
         }
         if buddy.character == .batman {
+            // The signal must conceal/reveal Batman and restore opacity on every interruption.
+            buddy.place(world)
+            let signal = BatSignal()
+            if !signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal did not start") }
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal allowed duplicate swarms") }
+            var concealed = false
+            for _ in 0..<180 {
+                buddy.update(dt: dt, world: world, scene: scene, web: web)
+                signal.update(dt: dt, world: world, buddy: buddy)
+                concealed = concealed || buddy.rig.root.alpha < 0.1
+            }
+            if !concealed || signal.phase != .camouflaged { failures.append("Bat swarm did not camouflage Batman") }
+            buddy.paused = true
+            let signalTime = signal.elapsed
+            let hiddenAlpha = buddy.rig.root.alpha
+            for _ in 0..<120 { signal.update(dt: dt, world: world, buddy: buddy) }
+            if signal.elapsed != signalTime || buddy.rig.root.alpha != hiddenAlpha { failures.append("Bat-Signal advanced while paused") }
+            buddy.paused = false
+            for _ in 0..<300 { signal.update(dt: dt, world: world, buddy: buddy) }
+            if signal.active || signal.root.parent != nil || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal did not reveal/clean up") }
+            for replacement in [BuddyCharacter.spider, .deadpool, .hulk] {
+                buddy.place(world)
+                _ = signal.start(world: world, scene: scene, buddy: buddy)
+                signal.update(dt: 3, world: world, buddy: buddy)
+                buddy.selectCharacter(replacement)
+                signal.update(dt: dt, world: world, buddy: buddy)
+                if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal left a switched character hidden") }
+                if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Non-Batman buddy summoned the Bat-Signal") }
+                buddy.selectCharacter(.batman)
+            }
+            buddy.place(world)
+            _ = signal.start(world: world, scene: scene, buddy: buddy)
+            signal.update(dt: 3, world: world, buddy: buddy)
+            buddy.mouseDown(at: buddy.pos, clickCount: 1, scene: scene)
+            buddy.mouseDragged(to: buddy.pos + CGPoint(x: 30, y: 30), time: 1)
+            signal.update(dt: dt, world: world, buddy: buddy)
+            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Dragging did not reveal Batman") }
+            buddy.cancelDrag(); buddy.place(world)
+            _ = signal.start(world: world, scene: scene, buddy: buddy)
+            signal.update(dt: 3, world: world, buddy: buddy)
+            signal.cancel(buddy: buddy)
+            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal cancellation did not restore opacity") }
+            _ = signal.start(world: world, scene: scene, buddy: buddy)
+            signal.update(dt: 3, world: world, buddy: buddy)
+            buddy.vehicleControl(at: buddy.pos, seated: true)
+            signal.update(dt: dt, world: world, buddy: buddy)
+            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Boarding did not clear camouflage") }
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal started in the car") }
+            buddy.leaveVehicle(world, at: world.bounds.midX)
+            buddy.paused = true
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal started while paused") }
+            buddy.paused = false
+            print("Bat-Signal           : conceal/reveal, pause, duplicate prevention, switch/drag/boarding cleanup passed")
             // Grapple should draw a cable, release it, and transition into a glide.
             buddy.place(world)
             buddy.webZip(world, scene, toCeiling: true)
