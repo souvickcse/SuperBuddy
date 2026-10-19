@@ -45,68 +45,44 @@ mkdir -p "$DIST"
 
 # the note that goes out with it
 cat > "$DIST/How to open Super Buddy.txt" <<'TXT'
-Super Buddy - a tiny web-slinging hero who lives on your desktop.
+Super Buddy - selectable superhero companions for your Mac desktop.
 
 REQUIREMENTS
   macOS 13 (Ventura) or newer. Works on Apple Silicon and Intel Macs.
 
 
-FIRST LAUNCH - PLEASE READ THIS BIT
-  This app is not from the App Store and is not signed with a paid Apple
-  developer certificate, so macOS refuses to open it the first time and offers
-  to "Move to Bin". It is not damaged and it is not malware - it is simply
-  unsigned. Pick ONE of these three:
+FIRST LAUNCH
+  This app is ad-hoc signed and is not notarized with Apple. If macOS blocks
+  the first launch, open System Settings > Privacy & Security, find the
+  SuperBuddy entry and choose Open Anyway. Only approve an app you trust.
 
-  A. The usual way (macOS 13 and later)
-      1. Drag SuperBuddy.app into your Applications folder.
-      2. Double-click it. macOS blocks it - click "Done", NOT "Move to Bin".
-      3. Open System Settings > Privacy & Security.
-      4. Scroll down to the "Security" section near the bottom. There is now a
-         line saying SuperBuddy.app was blocked because it is not from an
-         identified developer. Click "Open Anyway" and enter your password.
-      5. Double-click the app again, then click "Open".
-
-  B. The quick way (Terminal, one line)
-       xattr -dr com.apple.quarantine /Applications/SuperBuddy.app
-     Then double-click the app. This only clears the "downloaded from the
-     internet" flag - you are not turning off any security feature.
-
-  C. Skip all of it - build it yourself
-     With Xcode command line tools installed, open the SuperBuddy project
-     folder and run:   make run
-     An app built on your own Mac is never quarantined, so it just opens.
-
-  Note: "right-click > Open" was the old trick. Recent macOS versions removed
-  it for downloaded apps, which is why it may not work for you any more.
-
-  No installer, nothing to configure. To uninstall, delete SuperBuddy.app.
+  To uninstall, delete SuperBuddy.app, or use brew uninstall --cask superbuddy
+  if you installed it with Homebrew.
 
 
 WHAT IT IS
-  A small Spider-Man style character who walks along the edges of your screen,
-  crawls up the walls and across the top, jumps, shoots webs and swings around,
-  rests (sometimes hanging upside down from the ceiling) and does superhero
-  landings. Villains drop in every minute or two for a fight.
+  Four selectable desktop companions: Spider-Man, Deadpool, Batman and Hulk.
+  Use the shield icon in the menu bar to choose a buddy and trigger actions.
 
-  * Click him            - he does a little dance
-  * Drag him and let go  - he flails, falls and does a superhero landing
-  * The spider icon in the menu bar is the whole interface:
-      Summon a villain!, Dance, Jump, Web-zip to the ceiling / a wall,
-      Rest upside-down, Buddy size, Display (pick which screen he lives on),
-      Pause / Resume, Quit.
+  * Spider-Man: web swinging, wall crawling, jumps and superhero landings.
+  * Deadpool: katana sequences, pistol actions, swagger and dancing.
+  * Batman: Batarangs, grappling, gliding, Bat-Signal bat camouflage, and a
+    Batmobile that drives and climbs the side walls at high speed.
+  * Hulk: heavy movement, super leaps, smashes, thunderclaps and roaring.
+  * Each buddy has its own villain roster.
+  * Click or drag your buddy, select size/display, pause, reset or quit from
+    the menu bar. The Batmobile command starts a ride or brings it back.
 
-  He floats above the Dock and menu bar, but every click that is not aimed at
-  him goes straight through to whatever is underneath, so he never gets in
-  your way.
+  The overlay passes clicks through to other apps except over the buddy.
 
 
 PRIVACY
-  No network access, no analytics, no accounts. The app only draws on your
-  screen and reads nothing.
+  No network access, no analytics, no accounts. The app uses pointer position
+  for interaction and does not capture your screen contents.
 
 Built from source in the SuperBuddy project (see README.md). Original
 procedurally drawn artwork; an unofficial fan project, not affiliated with
-Marvel.
+Marvel or DC.
 TXT
 
 FOLDER="Super Buddy ${VERSION}"

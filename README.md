@@ -66,6 +66,16 @@ There is no Dock icon; everything lives in the **menu bar** (shield icon):
 * **Pause / Resume** — freeze him (great while screen sharing)
 * **Quit Super Buddy**
 
+## Install with Homebrew
+
+```bash
+brew install --cask souvickcse/tap/superbuddy
+```
+
+Open **Super Buddy** from Applications, then use the shield icon in the menu bar.
+This release is ad-hoc signed, not notarized. If macOS blocks the first launch,
+use **System Settings → Privacy & Security → Open Anyway** for Super Buddy.
+
 ## Build & run
 
 Requirements: macOS 13+, Xcode command line tools, and [xcodegen](https://github.com/yonaskolb/XcodeGen)
