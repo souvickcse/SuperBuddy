@@ -2,7 +2,7 @@
 
 A tiny superhero who lives on your Mac desktop.
 
-Use **Choose Buddy → Spider-Man / Deadpool** in the spider menu to switch characters.
+Use **Choose Buddy → Spider-Man / Deadpool** in the shield menu to switch characters.
 Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
 Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
@@ -56,7 +56,7 @@ vanish.
 
 ## Controls
 
-There is no Dock icon; everything lives in the **menu bar** (🕷️):
+There is no Dock icon; everything lives in the **menu bar** (shield icon):
 
 * **Come to my cursor** — he leaps to where the pointer is and lands like a hero
 * **Dance!**, **Jump**, **Shoot a web & swing**, **Go hang from the ceiling**

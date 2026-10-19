@@ -33,64 +33,39 @@ struct IconTool {
         ] as CFArray, locations: [0, 1])!
         ctx.drawLinearGradient(gradient, start: CGPoint(x: 0, y: S), end: CGPoint(x: 0, y: 0), options: [])
 
-        // faint web in the background
-        ctx.setStrokeColor(NSColor(white: 1, alpha: 0.10).cgColor)
-        ctx.setLineWidth(3)
-        for i in 0...10 {
-            let a = CGFloat(i) / 10 * .pi
-            ctx.move(to: CGPoint(x: S / 2, y: -100))
-            ctx.addLine(to: CGPoint(x: S / 2 + cos(a) * 1400, y: -100 + sin(a) * 1400))
-        }
-        ctx.strokePath()
-        for r in stride(from: CGFloat(180), through: 900, by: 180) {
-            ctx.addArc(center: CGPoint(x: S / 2, y: -100), radius: r, startAngle: 0, endAngle: .pi, clockwise: false)
-            ctx.strokePath()
-        }
         ctx.restoreGState()
 
-        // tile outline
-        ctx.addPath(tilePath)
-        ctx.setStrokeColor(NSColor(white: 0, alpha: 0.35).cgColor)
-        ctx.setLineWidth(8)
+        // A gold superhero shield and white lightning bolt, shared in spirit
+        // with the monochrome menu bar symbol. Independent of the chosen buddy.
+        let shield = CGMutablePath()
+        shield.move(to: CGPoint(x: 512, y: 832))
+        shield.addLine(to: CGPoint(x: 796, y: 718))
+        shield.addLine(to: CGPoint(x: 760, y: 430))
+        shield.addQuadCurve(to: CGPoint(x: 512, y: 200), control: CGPoint(x: 720, y: 290))
+        shield.addQuadCurve(to: CGPoint(x: 264, y: 430), control: CGPoint(x: 304, y: 290))
+        shield.addLine(to: CGPoint(x: 228, y: 718))
+        shield.closeSubpath()
+        ctx.setShadow(offset: CGSize(width: 0, height: -14), blur: 30, color: NSColor(white: 0, alpha: 0.4).cgColor)
+        ctx.addPath(shield)
+        ctx.setFillColor(NSColor(srgbRed: 1, green: 0.73, blue: 0.16, alpha: 1).cgColor)
+        ctx.fillPath()
+        ctx.setShadow(offset: .zero, blur: 0)
+        ctx.addPath(shield)
+        ctx.setStrokeColor(NSColor(srgbRed: 1, green: 0.89, blue: 0.53, alpha: 1).cgColor)
+        ctx.setLineWidth(12)
         ctx.strokePath()
 
-        // ---- the mask
-        let head = CGRect(x: S / 2 - 300, y: S / 2 - 250, width: 600, height: 530)
-        let headPath = CGPath(roundedRect: head, cornerWidth: 230, cornerHeight: 230, transform: nil)
-
-        ctx.saveGState()
-        ctx.addPath(headPath)
-        ctx.clip()
-        ctx.setFillColor(NSColor(srgbRed: 0.85, green: 0.11, blue: 0.17, alpha: 1).cgColor)
-        ctx.fill(head)
-
-        // webbing on the mask
-        ctx.setStrokeColor(NSColor(srgbRed: 0.16, green: 0.02, blue: 0.03, alpha: 0.75).cgColor)
-        ctx.setLineWidth(7)
-        let fan = CGPoint(x: S / 2, y: head.minY + 120)
-        for i in 0...8 {
-            let a = CGFloat.pi * (0.08 + 0.84 * CGFloat(i) / 8)
-            ctx.move(to: fan)
-            ctx.addLine(to: CGPoint(x: fan.x + cos(a) * 660, y: fan.y + sin(a) * 660))
-        }
-        ctx.strokePath()
-        ctx.setLineWidth(6)
-        for r in stride(from: CGFloat(70), through: 560, by: 78) {
-            ctx.addArc(center: fan, radius: r, startAngle: 0, endAngle: .pi, clockwise: false)
-            ctx.strokePath()
-        }
-        ctx.restoreGState()
-
-        ctx.addPath(headPath)
-        ctx.setStrokeColor(ink)
-        ctx.setLineWidth(14)
-        ctx.strokePath()
-
-        // ---- the lenses
-        drawLens(ctx, center: CGPoint(x: S / 2 + 118, y: S / 2 + 40), size: CGSize(width: 250, height: 208),
-                 tilt: -0.30, tint: NSColor(srgbRed: 0.97, green: 0.98, blue: 1.0, alpha: 1), ink: ink)
-        drawLens(ctx, center: CGPoint(x: S / 2 - 132, y: S / 2 + 62), size: CGSize(width: 205, height: 172),
-                 tilt: -0.30, tint: NSColor(srgbRed: 0.70, green: 0.78, blue: 0.92, alpha: 1), ink: ink)
+        let bolt = CGMutablePath()
+        bolt.move(to: CGPoint(x: 568, y: 745))
+        bolt.addLine(to: CGPoint(x: 380, y: 480))
+        bolt.addLine(to: CGPoint(x: 501, y: 480))
+        bolt.addLine(to: CGPoint(x: 453, y: 310))
+        bolt.addLine(to: CGPoint(x: 664, y: 572))
+        bolt.addLine(to: CGPoint(x: 540, y: 572))
+        bolt.closeSubpath()
+        ctx.addPath(bolt)
+        ctx.setFillColor(ink)
+        ctx.fillPath()
 
         guard let image = ctx.makeImage() else { exit(1) }
         let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "icon.png"

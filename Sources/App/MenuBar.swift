@@ -16,7 +16,9 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     func install() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
-            button.title = "\u{1F577}\u{FE0F}"
+            button.title = ""
+            button.image = NSImage(systemSymbolName: "bolt.shield.fill", accessibilityDescription: "Super Buddy")
+            button.image?.isTemplate = true
             button.toolTip = "Super Buddy"
             button.font = NSFont.systemFont(ofSize: 15)
         }
