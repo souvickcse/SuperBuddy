@@ -368,6 +368,7 @@ final class Villain {
             if skin.costume == .harley { return Motion.deadpoolSlash(CGFloat(stateTime / stateDuration) * 0.2) }
             return Motion.punch(clampf(CGFloat(stateTime / stateDuration) * 0.32, 0, 1))
         case .attack:
+            if [.abomination, .redHulk, .absorbingMan].contains(skin.costume) { return Motion.hulkSmash(CGFloat(stateTime / stateDuration)) }
             if skin.costume == .harley { return Motion.deadpoolSlash(0.2 + CGFloat(stateTime / stateDuration) * 0.5) }
             if skin.archetype == .shooter {
                 return Motion.shootWeb(Swift.min(CGFloat(stateTime), 0.2))

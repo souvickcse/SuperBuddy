@@ -33,7 +33,7 @@ enum VillainArchetype {
 
 /// Everything that makes one character look different from another. The buddy uses the
 /// default skin, so his appearance is unchanged; villains are just other skins.
-enum Costume { case plain, batman, joker, harley, bane, freeze }
+enum Costume { case plain, batman, joker, harley, bane, freeze, hulk, abomination, redHulk, leader, absorbingMan }
 
 struct Skin {
     var name = "Spider-Man"
@@ -67,6 +67,40 @@ struct Skin {
         limbDark: SKColor(srgbRed: 0.36, green: 0.03, blue: 0.05, alpha: 1),
         webbing: false, emblem: false, eyeScale: 0.78,
         backGear: .swords, deadpoolDetails: true)
+
+    static let hulk = Skin(name: "Hulk",
+        suit: SKColor(srgbRed: 0.24, green: 0.67, blue: 0.22, alpha: 1),
+        suitDark: SKColor(srgbRed: 0.12, green: 0.39, blue: 0.12, alpha: 1),
+        limb: SKColor(srgbRed: 0.22, green: 0.6, blue: 0.18, alpha: 1),
+        limbDark: SKColor(srgbRed: 0.1, green: 0.34, blue: 0.09, alpha: 1),
+        webbing: false, emblem: false, eyeScale: 0.65, bodyScale: 1.25, costume: .hulk)
+
+    static let hulkVillains: [Skin] = [
+        { () -> Skin in
+            var s = Skin.hulk
+            s.name = "Abomination"; s.costume = .abomination
+            s.suit = SKColor(srgbRed: 0.36, green: 0.48, blue: 0.18, alpha: 1)
+            s.limb = s.suit; s.bodyScale = 1.4; s.archetype = .charger
+            return s
+        }(),
+        { () -> Skin in
+            var s = Skin.hulk
+            s.name = "Red Hulk"; s.costume = .redHulk
+            s.suit = SKColor(srgbRed: 0.75, green: 0.16, blue: 0.12, alpha: 1)
+            s.suitDark = SKColor(srgbRed: 0.44, green: 0.07, blue: 0.05, alpha: 1)
+            s.limb = s.suit; s.limbDark = s.suitDark; s.archetype = .charger
+            return s
+        }(),
+        Skin(name: "Leader", suit: SKColor(srgbRed: 0.28, green: 0.72, blue: 0.25, alpha: 1),
+             suitDark: SKColor(srgbRed: 0.16, green: 0.42, blue: 0.14, alpha: 1),
+             limb: SKColor(srgbRed: 0.75, green: 0.42, blue: 0.13, alpha: 1),
+             limbDark: SKColor(srgbRed: 0.43, green: 0.22, blue: 0.06, alpha: 1),
+             webbing: false, emblem: false, archetype: .shooter, costume: .leader),
+        Skin(name: "Absorbing Man", suit: SKColor(white: 0.6, alpha: 1),
+             suitDark: SKColor(white: 0.35, alpha: 1),
+             limb: SKColor(white: 0.5, alpha: 1), limbDark: SKColor(white: 0.25, alpha: 1),
+             webbing: false, emblem: false, bodyScale: 1.2, costume: .absorbingMan)
+    ]
 
     static let batman = Skin(name: "Batman",
         suit: SKColor(white: 0.3, alpha: 1), suitDark: SKColor(white: 0.12, alpha: 1),
@@ -222,7 +256,12 @@ struct Skin {
     ]
 
     static func villains(for character: BuddyCharacter) -> [Skin] {
-        character == .batman ? batmanVillains : (character == .deadpool ? deadpoolVillains : villains)
+        switch character {
+        case .spider: return villains
+        case .deadpool: return deadpoolVillains
+        case .batman: return batmanVillains
+        case .hulk: return hulkVillains
+        }
     }
 
     static func randomVillain(for character: BuddyCharacter = .spider) -> Skin {
@@ -233,7 +272,21 @@ struct Skin {
 
 /// Stable preference IDs are independent of the names shown in the menu.
 enum BuddyCharacter: String, CaseIterable {
-    case spider, deadpool, batman
-    var title: String { self == .batman ? "Batman" : (self == .spider ? "Spider-Man" : "Deadpool") }
-    var skin: Skin { self == .batman ? .batman : (self == .spider ? .buddy : .deadpool) }
+    case spider, deadpool, batman, hulk
+    var title: String {
+        switch self {
+        case .spider: return "Spider-Man"
+        case .deadpool: return "Deadpool"
+        case .batman: return "Batman"
+        case .hulk: return "Hulk"
+        }
+    }
+    var skin: Skin {
+        switch self {
+        case .spider: return .buddy
+        case .deadpool: return .deadpool
+        case .batman: return .batman
+        case .hulk: return .hulk
+        }
+    }
 }

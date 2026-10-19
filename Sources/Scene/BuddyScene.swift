@@ -99,6 +99,8 @@ final class BuddyScene: SKScene {
     func selectCharacter(_ character: BuddyCharacter) {
         batmobile.cancel(world: world, buddy: buddy)
         buddy.selectCharacter(character)
+        world.reach = buddy.reach
+        buddy.keepInside(world)
         UserDefaults.standard.set(character.rawValue, forKey: "buddyCharacter")
     }
 
@@ -113,6 +115,13 @@ final class BuddyScene: SKScene {
               buddy.currentState != .grabbed, !frozen else { return }
         buddy.pistolShot(at: buddy.pos + CGPoint(x: buddy.facing * 240, y: 0), scene: self)
     }
+
+    func commandSmash() {
+        guard buddy.character == .hulk, buddy.grounded, !frozen,
+              buddy.currentState != .grabbed else { return }
+        buddy.punchAt(buddy.pos + CGPoint(x: buddy.facing * 80, y: 0), scene: self)
+    }
+    func commandClap() { if !frozen { buddy.thunderclap(self) } }
 
     func commandBatarang() {
         guard !frozen, !buddy.inVehicle else { return }

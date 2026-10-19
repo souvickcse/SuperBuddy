@@ -205,4 +205,16 @@ enum FX {
                            .group([.move(to: origin, duration: 0.35), .rotate(byAngle: .pi * 4, duration: 0.35)]), .removeFromParent()]))
     }
 
+    static func thunderclap(at p: CGPoint, facing: CGFloat, in scene: SKScene) {
+        for i in 0..<3 {
+            let wave = SKShapeNode(circleOfRadius: CGFloat(10 + i * 5))
+            wave.position = p; wave.xScale = 0.4
+            wave.fillColor = .clear; wave.strokeColor = SKColor(srgbRed: 0.64, green: 1, blue: 0.55, alpha: 0.9)
+            wave.lineWidth = 2; wave.zPosition = 112; scene.addChild(wave)
+            wave.run(.sequence([.wait(forDuration: Double(i) * 0.06),
+                .group([.moveBy(x: facing * 200, y: 0, duration: 0.5), .scale(to: 2.5, duration: 0.5), .fadeOut(withDuration: 0.5)]), .removeFromParent()]))
+        }
+        text("BOOM!", at: p + CGPoint(x: 0, y: 30), in: scene)
+    }
+
 }

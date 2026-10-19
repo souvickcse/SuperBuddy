@@ -76,7 +76,22 @@ final class Battle {
             if buddyCooldown <= 0, buddy.currentState != .fall, buddy.currentState != .grabbed {
                 let dx = abs(v.pos.x - buddy.pos.x)
                 let overhead = v.pos.y - buddy.pos.y > 70
-                if buddy.character == .batman {
+                if buddy.character == .hulk {
+                    if buddy.grounded, buddy.currentState != .punch, buddy.currentState != .thunderclap {
+                        if !overhead, dx < 155 {
+                            buddy.punchAt(v.pos, scene: scene)
+                            buddyCooldown = 1.6
+                            registerHit(on: v, from: buddy.pos, world: world, scene: scene, buddy: buddy)
+                        } else if overhead || dx > 300 {
+                            buddy.thunderclap(scene)
+                            buddyCooldown = 1.5
+                            registerHit(on: v, from: buddy.pos, world: world, scene: scene, buddy: buddy)
+                        } else {
+                            buddy.approach(v.pos.x, scene: scene, run: true)
+                            buddyCooldown = 0.2
+                        }
+                    }
+                } else if buddy.character == .batman {
                     if buddy.grounded, buddy.currentState != .batarang, buddy.currentState != .punch {
                         if !overhead, dx < 128 {
                             buddy.punchAt(v.pos, scene: scene)

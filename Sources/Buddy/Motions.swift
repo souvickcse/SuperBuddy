@@ -166,6 +166,77 @@ enum Motion {
         return Pose.timeline([batmanIdle(0), punch(0.25), jab, kick, batmanIdle(0)], t)
     }
 
+    static func hulkIdle(_ t: CGFloat) -> Pose {
+        var p = idle(t)
+        p.torso = 0.2; p.head = -0.2
+        p.armNear = 0.5; p.armFar = -0.5
+        p.foreNear = 0.6; p.foreFar = 0.5
+        p.thighNear = 0.3; p.thighFar = -0.3
+        p.hip.y = -2 + 0.6 * sin(t * 2)
+        return p
+    }
+
+    static func hulkWalk(_ t: CGFloat) -> Pose {
+        var p = walk(t * 0.65)
+        p.torso = 0.25; p.head = -0.2
+        p.armNear *= 1.3; p.armFar *= 1.3
+        p.foreNear = 0.6; p.foreFar = 0.6
+        p.hip.y -= 1.5
+        return p
+    }
+
+    static func hulkLeap(_ t: CGFloat, rising: Bool) -> Pose {
+        var p = hulkIdle(t)
+        p.armNear = rising ? 2.6 : 0.6; p.armFar = rising ? -2.6 : -0.6
+        p.foreNear = 0.7; p.foreFar = -0.7
+        p.thighNear = 0.8; p.shinNear = -1.2
+        p.thighFar = -0.5; p.shinFar = -0.9
+        p.torso = 0.15
+        return p
+    }
+
+    static func hulkSmash(_ t: CGFloat) -> Pose {
+        var wind = hulkIdle(0)
+        wind.armNear = 2.9; wind.armFar = -2.9
+        wind.foreNear = 0.3; wind.foreFar = -0.3; wind.torso = -0.2
+        var smash = wind
+        smash.armNear = 0.4; smash.armFar = -0.4
+        smash.torso = 0.8; smash.head = 0.1
+        smash.hip.y = -12; smash.squash = 0.96
+        smash.thighNear = 0.95; smash.shinNear = -1.85
+        smash.thighFar = -0.6; smash.shinFar = -1.1
+        let near = solveLimb(from: CGPoint(x: 9, y: 16).rotated(by: smash.torso),
+                             to: CGPoint(x: 15, y: -14), upper: 10.5, lower: 10.5, elbowForward: true)
+        let far = solveLimb(from: CGPoint(x: -7, y: 16).rotated(by: smash.torso),
+                            to: CGPoint(x: -12, y: -14), upper: 10.5, lower: 10.5, elbowForward: false)
+        smash.armNear = near.shoulder - smash.torso; smash.foreNear = near.bend
+        smash.armFar = far.shoulder - smash.torso; smash.foreFar = far.bend
+        return Pose.timeline([hulkIdle(0), wind, wind, smash, smash, hulkIdle(0)], t)
+    }
+
+    static func hulkClap(_ t: CGFloat) -> Pose {
+        var wind = hulkIdle(0)
+        wind.armNear = 1.7; wind.armFar = -1.7
+        wind.foreNear = -0.7; wind.foreFar = 0.7
+        var clap = wind
+        clap.armNear = 1.5; clap.armFar = 1.4
+        let near = solveLimb(from: CGPoint(x: 9, y: 16), to: CGPoint(x: 12, y: 14), upper: 10.5, lower: 10.5, elbowForward: true)
+        let far = solveLimb(from: CGPoint(x: -7, y: 16), to: CGPoint(x: 12, y: 14), upper: 10.5, lower: 10.5, elbowForward: false)
+        clap.armNear = near.shoulder; clap.foreNear = near.bend
+        clap.armFar = far.shoulder; clap.foreFar = far.bend; clap.torso = 0.3
+        return Pose.timeline([wind, wind, clap, clap, hulkIdle(0)], t)
+    }
+
+    static func hulkRoar(_ t: CGFloat) -> Pose {
+        var p = hulkIdle(t)
+        p.head = -0.4
+        p.armNear = 1.0 + 0.15 * sin(t * 12)
+        p.armFar = -1.0 - 0.15 * sin(t * 12)
+        p.foreNear = 1.5; p.foreFar = -1.5
+        p.torso = -0.08; p.squash = 1.04
+        return p
+    }
+
     // MARK: Locomotion
 
     static func walk(_ t: CGFloat, speed: CGFloat = 1) -> Pose {

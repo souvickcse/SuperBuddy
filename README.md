@@ -2,7 +2,7 @@
 
 A tiny superhero who lives on your Mac desktop.
 
-Use **Choose Buddy → Spider-Man / Deadpool / Batman** in the shield menu to switch characters.
+Use **Choose Buddy → Spider-Man / Deadpool / Batman / Hulk** in the shield menu to switch characters.
 Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
 Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
@@ -214,3 +214,16 @@ interpretations using the existing battle system.
 
 Run `./.build/simcheck --batman` after `make check` to exercise his movement, all four
 villains, grappling/gliding, the full vehicle trip, pause and vehicle cleanup.
+
+## Hulk
+
+Choose **Hulk** for a larger, muscular green buddy with purple shorts and oversized
+fists. He patrols on the floor, takes powerful leaps, lands with a shockwave, and
+occasionally stops walking for a two-handed smash. Click him for a roar and flex.
+His menu provides **Hulk smash!** (⌘K), **Thunderclap** (⌘T), **Super leap** (⌘J),
+and **Roar & flex** (⌘D). He has no webs, guns, swords, grappling cable or vehicle.
+
+His opponents are **Abomination**, **Red Hulk**, **Leader**, and **Absorbing Man**.
+He closes in for a smash or uses a thunderclap shockwave from a distance.
+`./.build/simcheck --hulk` checks his movement, attacks, size/hit area and all four
+opponents after `make check`.

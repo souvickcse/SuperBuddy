@@ -9,7 +9,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private var characterMenu: NSMenu?
 
     private enum Tag: Int {
-        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, summonCar, driveCar, dismissCar
+        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, summonCar, driveCar, dismissCar, smash, clap
         case sizeSmall = 100, sizeMedium, sizeLarge
     }
 
@@ -33,6 +33,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Jump", .jump, "j"))
         menu.addItem(make("Katana slash", .katana, "k"))
         menu.addItem(make("Fire pistol", .pistol, "f"))
+        menu.addItem(make("Hulk smash!", .smash, "k"))
+        menu.addItem(make("Thunderclap", .clap, "t"))
         menu.addItem(make("Throw Batarang", .batarang, "b"))
         menu.addItem(make("Combat combo", .combo, "k"))
         menu.addItem(make("Grapple", .grapple, "g"))
@@ -90,16 +92,19 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         guard menu === mainMenu else { return }
+        let isHulk = BuddyCenter.shared.scene?.buddy.character == .hulk
         let isBatman = BuddyCenter.shared.scene?.buddy.character == .batman
         let isDeadpool = BuddyCenter.shared.scene?.buddy.character == .deadpool
         for item in mainMenu?.items ?? [] {
             if [Tag.swing, .hang, .zipUp, .zipSide, .restUpsideDown].map({ $0.rawValue }).contains(item.tag) {
-                item.isHidden = isDeadpool || isBatman
+                item.isHidden = isDeadpool || isBatman || isHulk
             }
             if [Tag.batarang, .combo, .grapple, .glide, .summonCar, .driveCar, .dismissCar].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = !isBatman
             }
-            if item.tag == Tag.dance.rawValue { item.title = isBatman ? "Scan & flip Batarang" : "Dance!" }
+            if [Tag.smash, .clap].map({ $0.rawValue }).contains(item.tag) { item.isHidden = !isHulk }
+            if item.tag == Tag.jump.rawValue { item.title = isHulk ? "Super leap" : "Jump" }
+            if item.tag == Tag.dance.rawValue { item.title = isHulk ? "Roar & flex" : (isBatman ? "Scan & flip Batarang" : "Dance!") }
             if [Tag.katana, .pistol].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = !isDeadpool
             }
@@ -162,6 +167,8 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .villain: BuddyCenter.shared.summonVillain()
         case .katana: BuddyCenter.shared.scene?.commandKatana()
         case .pistol: BuddyCenter.shared.scene?.commandPistol()
+        case .smash: BuddyCenter.shared.scene?.commandSmash()
+        case .clap: BuddyCenter.shared.scene?.commandClap()
         case .batarang: BuddyCenter.shared.scene?.commandBatarang()
         case .combo: BuddyCenter.shared.scene?.commandCombo()
         case .grapple: BuddyCenter.shared.scene?.commandGrapple()

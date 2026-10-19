@@ -60,6 +60,8 @@ final class Rig {
         didSet { if blink != oldValue { updateEyes() } }
     }
 
+    private var muscular: Bool { [.hulk, .redHulk, .abomination, .absorbingMan].contains(skin.costume) }
+    private var shortsColor: SKColor { skin.costume == .redHulk ? SKColor(white: 0.12, alpha: 1) : SKColor(srgbRed: 0.35, green: 0.14, blue: 0.5, alpha: 1) }
     let skin: Skin
 
     var facing: CGFloat = 1 { didSet { applyTransform() } }
@@ -89,20 +91,20 @@ final class Rig {
 
         // far arm (behind the torso) ------------------------------------
         armFar = makeArm(shaded: true)
-        armFar.pivot.position = CGPoint(x: -3.0, y: 16)
+        armFar.pivot.position = CGPoint(x: muscular ? -7 : -3, y: 16)
         armFar.pivot.zPosition = 2
         upper.addChild(armFar.pivot)
 
         // pelvis --------------------------------------------------------
         let pelvis = SKShapeNode(rect: CGRect(x: -7.5, y: -7, width: 15, height: 13), cornerRadius: 5.5)
-        pelvis.fillColor = skin.limb
+        pelvis.fillColor = muscular ? shortsColor : skin.limb
         pelvis.strokeColor = skin.ink
         pelvis.lineWidth = 1.4
         pelvis.zPosition = 3
         hipNode.addChild(pelvis)
 
         // torso ---------------------------------------------------------
-        let torsoRect = CGRect(x: -9.5, y: -2, width: 19, height: 24)
+        let torsoRect = CGRect(x: muscular ? -13 : -9.5, y: -2, width: muscular ? 26 : 19, height: 24)
         let torso = SKShapeNode(rect: torsoRect, cornerRadius: 8)
         torso.fillColor = skin.suit
         torso.strokeColor = skin.ink
@@ -146,12 +148,13 @@ final class Rig {
 
         // near arm ------------------------------------------------------
         armNear = makeArm(shaded: false)
-        armNear.pivot.position = CGPoint(x: 5.2, y: 16)
+        armNear.pivot.position = CGPoint(x: muscular ? 9 : 5.2, y: 16)
         armNear.pivot.zPosition = 9
         upper.addChild(armNear.pivot)
         if skin.deadpoolDetails { buildWeapons() }
         if skin.costume == .batman { buildBatman() }
         if skin.costume == .harley { buildMallet() }
+        if muscular { buildMuscles() }
     }
 
     static func batShape() -> CGPath {
@@ -184,6 +187,43 @@ final class Rig {
         heldBat.addChild(batarang); armNear.tip.addChild(heldBat)
         heldBat.isHidden = true
         animateCostume(time: 0, gliding: false)
+    }
+
+    private func buildMuscles() {
+        for x: CGFloat in [-6, 6] {
+            let pec = SKShapeNode(ellipseOf: CGSize(width: 10, height: 9))
+            pec.position = CGPoint(x: x, y: 15); pec.zPosition = 5
+            pec.fillColor = skin.suit; pec.strokeColor = skin.suitDark; pec.lineWidth = 0.8
+            upper.addChild(pec)
+        }
+        let absPath = CGMutablePath()
+        absPath.move(to: CGPoint(x: 0, y: 1)); absPath.addLine(to: CGPoint(x: 0, y: 11))
+        for y: CGFloat in [4, 8] { absPath.move(to: CGPoint(x: -5, y: y)); absPath.addLine(to: CGPoint(x: 5, y: y)) }
+        let absNode = SKShapeNode(path: absPath)
+        absNode.strokeColor = skin.suitDark; absNode.lineWidth = 0.8; absNode.zPosition = 5
+        upper.addChild(absNode)
+    }
+
+    private func buildHulkFace() {
+        if skin.costume != .absorbingMan {
+            let hair = CGMutablePath()
+            hair.addLines(between: [CGPoint(x: -11, y: 5), CGPoint(x: -10, y: 12), CGPoint(x: -6, y: 9),
+                CGPoint(x: -3, y: 13), CGPoint(x: 0, y: 10), CGPoint(x: 4, y: 13), CGPoint(x: 10, y: 10), CGPoint(x: 11, y: 5)])
+            hair.closeSubpath()
+            let node = SKShapeNode(path: hair)
+            node.fillColor = skin.ink; node.strokeColor = skin.ink; node.zPosition = 2
+            headNode.addChild(node)
+        }
+        let teeth = SKShapeNode(rect: CGRect(x: -5, y: -7, width: 11, height: 3.5), cornerRadius: 1)
+        teeth.fillColor = .white; teeth.strokeColor = skin.ink; teeth.lineWidth = 1; teeth.zPosition = 3
+        headNode.addChild(teeth)
+        if skin.costume == .abomination {
+            for x: CGFloat in [-13, 13] {
+                let ear = SKShapeNode(ellipseOf: CGSize(width: 8, height: 12))
+                ear.position = CGPoint(x: x, y: 0); ear.fillColor = skin.suitDark; ear.strokeColor = skin.ink
+                headNode.addChild(ear)
+            }
+        }
     }
 
     private func buildMallet() {
@@ -256,6 +296,20 @@ final class Rig {
                     tilt: -0.30, at: CGPoint(x: 4.0, y: 1.0), outline: 1.7)
         _ = makeEye(size: CGSize(width: 7.6 * k, height: 6.6 * k), color: skin.eyeFar,
                     tilt: -0.30, at: CGPoint(x: -4.6, y: 1.5), outline: 1.4)
+        if muscular { buildHulkFace() }
+        if skin.costume == .leader {
+            let cranium = SKShapeNode(rect: CGRect(x: -10, y: 5, width: 20, height: 19), cornerRadius: 7)
+            cranium.fillColor = skin.suit; cranium.strokeColor = skin.ink
+            headNode.addChild(cranium)
+            let folds = CGMutablePath()
+            for y: CGFloat in [10, 15, 20] {
+                folds.move(to: CGPoint(x: -6, y: y))
+                folds.addQuadCurve(to: CGPoint(x: 6, y: y), control: CGPoint(x: 0, y: y + 4))
+            }
+            let ridges = SKShapeNode(path: folds)
+            ridges.strokeColor = skin.suitDark; ridges.lineWidth = 0.8; ridges.zPosition = 1
+            headNode.addChild(ridges)
+        }
         buildHeadgear()
     }
 
@@ -611,7 +665,7 @@ final class Rig {
     private func makeArm(shaded: Bool) -> Limb {
         let upperLen: CGFloat = 10.5
         let foreLen: CGFloat = 10.5
-        let w: CGFloat = 6.4
+        let w: CGFloat = muscular ? 10 : 6.4
         let base = shaded ? skin.limbDark : skin.limb
 
         let pivot = SKNode()
@@ -634,7 +688,7 @@ final class Rig {
         fore.lineWidth = 1.3
         elbow.addChild(fore)
 
-        let hand = SKShapeNode(circleOfRadius: 3.5)
+        let hand = SKShapeNode(circleOfRadius: muscular ? 5.8 : 3.5)
         hand.fillColor = shaded ? skin.suitDark : skin.suit
         hand.strokeColor = skin.ink
         hand.lineWidth = 1.3
@@ -652,12 +706,12 @@ final class Rig {
     private func makeLeg(shaded: Bool) -> Limb {
         let thigh: CGFloat = 13
         let shin: CGFloat = 13
-        let w: CGFloat = 7.2
+        let w: CGFloat = muscular ? 10 : 7.2
         let base = shaded ? skin.limbDark : skin.limb
 
         let pivot = SKNode()
         let up = SKShapeNode(rect: CGRect(x: -w / 2, y: -thigh, width: w, height: thigh + 2.6), cornerRadius: w / 2)
-        up.fillColor = base
+        up.fillColor = muscular ? shortsColor : base
         up.strokeColor = skin.ink
         up.lineWidth = 1.3
         pivot.addChild(up)

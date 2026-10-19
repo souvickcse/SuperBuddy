@@ -24,7 +24,13 @@ struct Shot {
     var skin: Skin = Skin()         // costume
 }
 
-let shots: [Shot] = (Skin.batmanVillains + Skin.deadpoolVillains).map { Shot(name: $0.name, pose: Motion.idle(0.4), skin: $0) } + [
+let shots: [Shot] = (Skin.hulkVillains + Skin.batmanVillains + Skin.deadpoolVillains).map { Shot(name: $0.name, pose: Motion.idle(0.4), skin: $0) } + [
+    Shot(name: "Hulk - idle", pose: Motion.hulkIdle(0.5), skin: .hulk),
+    Shot(name: "Hulk - walk", pose: Motion.hulkWalk(0.4), skin: .hulk),
+    Shot(name: "Hulk - leap", pose: Motion.hulkLeap(0.5, rising: true), skin: .hulk),
+    Shot(name: "Hulk - smash", pose: Motion.hulkSmash(0.62), skin: .hulk),
+    Shot(name: "Hulk - thunderclap", pose: Motion.hulkClap(0.55), skin: .hulk),
+    Shot(name: "Hulk - roar", pose: Motion.hulkRoar(0.4), skin: .hulk),
     Shot(name: "Batmobile", pose: .stand, car: true, skin: .batman),
     Shot(name: "Batman - idle", pose: Motion.batmanIdle(0.5), skin: .batman),
     Shot(name: "Batman - patrol", pose: Motion.batmanWalk(0.35), skin: .batman),
@@ -199,7 +205,7 @@ struct PreviewTool {
         let rigScale: CGFloat = big ? 3.1 : 1.9
         let baseY: CGFloat = big ? 150 : 82
         let groundY: CGFloat = big ? baseY - 26 * rigScale : 58
-        let labelY: CGFloat = big ? 50 : 40
+        let labelY: CGFloat = big ? 22 : 24
 
         let rows = Int(ceil(Double(shown.count) / Double(cols)))
         let sheet = CGSize(width: cellW * CGFloat(cols), height: cellH * CGFloat(rows))
@@ -214,13 +220,13 @@ struct PreviewTool {
             let base = CGPoint(x: origin.x + cellW / 2, y: origin.y + baseY)
 
             let rig = Rig(skin: shot.skin)
-            rig.scale = rigScale
+            rig.scale = rigScale * (shot.skin.costume == .hulk ? shot.skin.bodyScale : 1)
             rig.facing = shot.facing
             rig.apply(shot.pose)
             rig.animateCostume(time: 0.5, gliding: shot.name == "Batman - glide", batarang: shot.name == "Batman - Batarang")
             rig.showWeapons(sword: shot.name == "Deadpool - slash", pistol: shot.name == "Deadpool - pistol")
             rig.blink = shot.blink
-            rig.root.position = base
+            rig.root.position = base + CGPoint(x: 0, y: shot.skin.costume == .hulk ? Rig.footReach * rigScale * (shot.skin.bodyScale - 1) : 0)
             rig.root.zRotation = shot.tilt
             scene.addChild(rig.root)
             if shot.car {

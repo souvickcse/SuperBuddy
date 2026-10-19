@@ -6,7 +6,7 @@ import SpriteKit
 final class Buddy {
 
     enum State: Equatable {
-        case stand, walk, run, jump, fall, glide, batarang, swing, hang, zip, webBlast, pistolShot, punch, grabbed, dance, heroLand, recover
+        case stand, walk, run, jump, fall, glide, batarang, thunderclap, swing, hang, zip, webBlast, pistolShot, punch, grabbed, dance, heroLand, recover
 
         var isAirborne: Bool { self == .jump || self == .fall || self == .glide || self == .swing || self == .hang || self == .zip }
     }
@@ -20,7 +20,7 @@ final class Buddy {
     var speedScale: CGFloat = 1
     var paused = false
     private(set) var inVehicle = false
-    var scale: CGFloat = 0.9 { didSet { rig.scale = scale } }
+    var scale: CGFloat = 0.9 { didSet { rig.scale = scale * character.skin.bodyScale } }
 
     // MARK: Rig + simulation
 
@@ -33,7 +33,7 @@ final class Buddy {
         let old = rig
         let parent = old.root.parent
         let replacement = Rig(skin: character.skin)
-        replacement.scale = scale
+        replacement.scale = scale * character.skin.bodyScale
         replacement.facing = old.facing
         replacement.blink = old.blink
         replacement.apply(currentPose)
@@ -52,7 +52,7 @@ final class Buddy {
             grounded = false
             vel = CGPoint(x: 0, y: -120)
             enter(.fall)
-        } else if state == .webBlast || state == .batarang || state == .pistolShot || state == .punch || state == .dance {
+        } else if state == .webBlast || state == .batarang || state == .pistolShot || state == .punch || state == .dance || state == .thunderclap {
             enter(.stand)
         }
     }
@@ -233,8 +233,9 @@ final class Buddy {
         case .zip: stateDuration = 2.0
         case .webBlast: stateDuration = 0.52
         case .batarang: stateDuration = 1.1
+        case .thunderclap: stateDuration = 1.3
         case .pistolShot: stateDuration = Motion.pistolDuration
-        case .punch: stateDuration = character == .deadpool ? Motion.katanaDuration : (character == .batman ? 1.25 : 0.50)
+        case .punch: stateDuration = character == .deadpool ? Motion.katanaDuration : (character == .batman ? 1.25 : (character == .hulk ? 1.4 : 0.50))
         case .swing: stateDuration = Double(randf(1.6, 2.6))
         case .heroLand: stateDuration = 0.9
         case .recover: stateDuration = 0.45
@@ -254,6 +255,12 @@ final class Buddy {
             if pos.x < world.leftX + reach || pos.x > world.rightX - reach { vel.x = -vel.x; facing = -facing }
             pos.x = world.clampX(pos.x)
             _ = tryLand(world, scene: scene)
+        case .thunderclap:
+            if weaponEffectIndex == 0 && stateTime >= 0.48 {
+                weaponEffectIndex = 1
+                FX.thunderclap(at: pos + CGPoint(x: facing * 20, y: reach * 0.6), facing: facing, in: scene)
+            }
+            if stateTime > stateDuration { enter(.stand) }
         case .batarang:
             if weaponEffectIndex == 0 && stateTime >= 0.36 {
                 weaponEffectIndex = 1
@@ -271,6 +278,12 @@ final class Buddy {
         case .grabbed:
             break
         case .webBlast, .pistolShot, .punch:
+            if character == .hulk, state == .punch, weaponEffectIndex == 0, stateTime >= 0.65 {
+                weaponEffectIndex = 1
+                FX.superheroImpact(at: pos - up * reach, in: scene, power: 1.7)
+                FX.text("SMASH!", at: pos + CGPoint(x: 0, y: reach + 20), in: scene)
+                shakeMag = 6
+            }
             if character == .deadpool, !paused {
                 let cues: [Double] = state == .pistolShot ? [0.48, 1.0] : [0.52, 0.9]
                 while weaponEffectIndex < cues.count, stateTime >= cues[weaponEffectIndex] {
@@ -319,7 +332,7 @@ final class Buddy {
         // crawling up a wall is a long trip, so he covers ground a little quicker there
         let climbing = (surface == .left || surface == .right || surface == .ceiling)
         let base = state == .run ? runSpeed : (climbing ? walkSpeed * 1.55 : walkSpeed)
-        let speed = base * speedScale
+        let speed = base * speedScale * (character == .hulk ? 0.78 : 1)
         let t = world.tangent(for: surface)
         pos = pos + t * (facing * speed * dt)
 
@@ -518,6 +531,16 @@ final class Buddy {
 
     private func decide(_ world: World, _ scene: SKScene) {
         guard !paused, !isGrabbed, !inBattle else { return }
+        if character == .hulk {
+            let roll = randf(0, 1)
+            if roll < 0.32 { enter(.walk) }
+            else if roll < 0.43 { enter(.run) }
+            else if roll < 0.59 { jump(world) }
+            else if roll < 0.7 { enter(.punch) }
+            else if roll < 0.8 { dance(scene) }
+            else { enter(.stand) }
+            return
+        }
         if character == .batman {
             let roll = randf(0, 1)
             if roll < 0.3 { enter(.walk) }
@@ -575,7 +598,7 @@ final class Buddy {
     func jump(_ world: World) {
         let t = world.tangent(for: surface)
         if character != .spider {
-            vel = CGPoint(x: facing * randf(180, 320), y: jumpSpeed * 0.78)
+            vel = CGPoint(x: facing * randf(180, 320), y: character == .hulk ? jumpSpeed * 1.25 : jumpSpeed * 0.78)
             grounded = false
             forceHeroLand = true
             enter(.jump)
@@ -663,7 +686,7 @@ final class Buddy {
     /// Shoot a line at the ceiling (or the nearest wall) and get pulled straight
     /// there, arriving in a crawl stance.
     func webZip(_ world: World, _ scene: SKScene, toCeiling: Bool? = nil) {
-        guard character != .deadpool else { return }
+        guard character == .spider || character == .batman else { return }
         let goUp = toCeiling ?? chance(0.62)
         let target: CGPoint
         let attach: CGPoint
@@ -709,7 +732,8 @@ final class Buddy {
         forceHeroLand = false
         enter(.dance)
         blinkNow()
-        if character == .batman { FX.text("GOTHAM IS SAFE.", at: pos + CGPoint(x: 0, y: reach + 12), in: scene) }
+        if character == .hulk { FX.text("HULK STRONGEST!", at: pos + CGPoint(x: 0, y: reach + 20), in: scene) }
+        else if character == .batman { FX.text("GOTHAM IS SAFE.", at: pos + CGPoint(x: 0, y: reach + 12), in: scene) }
         else { FX.notes(at: pos + CGPoint(x: 0, y: reach + 8), in: scene, count: 5) }
         FX.hitSpark(at: pos, in: scene)
     }
@@ -741,22 +765,28 @@ final class Buddy {
 
         switch state {
         case .stand:
+            if character == .hulk { return Motion.hulkIdle(t) }
             if onFloor { return character == .batman ? Motion.batmanIdle(t) : (character == .deadpool ? Motion.deadpoolIdle(t) : Motion.idle(t)) }
             crawlingNow = true
             return Motion.crawlRest(t)
         case .walk:
+            if character == .hulk { return Motion.hulkWalk(t) }
             if onFloor { return character == .batman ? Motion.batmanWalk(t) : (character == .deadpool ? Motion.deadpoolWalk(t) : Motion.walk(t, speed: 1)) }
             crawlingNow = true
             return Motion.crawl(t, speed: 1)
         case .run:
+            if character == .hulk { return Motion.hulkWalk(t * 1.7) }
             if onFloor { return Motion.run(t, speed: 1) }
             crawlingNow = true
             return Motion.crawl(t, speed: 1.45)
         case .glide:
             return Motion.batmanGlide(t)
+        case .thunderclap:
+            return Motion.hulkClap(CGFloat(stateTime / 1.3))
         case .batarang:
             return Motion.batmanThrow(CGFloat(stateTime / 1.1))
         case .jump, .fall:
+            if character == .hulk { return Motion.hulkLeap(t, rising: vel.y > 0) }
             return character == .deadpool ? Motion.deadpoolAir(t) : Motion.air(t, vertical: vel.y)
         case .swing:
             return stateTime < 0.14 ? Motion.shootWeb(CGFloat(stateTime)) : Motion.swing(t, speed: vel.length / 420)
@@ -769,12 +799,14 @@ final class Buddy {
         case .pistolShot:
             return Motion.deadpoolShoot(CGFloat(stateTime / Motion.pistolDuration))
         case .punch:
+            if character == .hulk { return Motion.hulkSmash(CGFloat(stateTime / 1.4)) }
             if character == .batman { return Motion.batmanCombo(CGFloat(stateTime / 1.25)) }
             if character == .deadpool { return Motion.deadpoolSlash(CGFloat(stateTime / Motion.katanaDuration)) }
             return Motion.punch(clampf(CGFloat(stateTime / 0.5), 0, 1))
         case .grabbed:
             return Motion.flail(t, drift: dragVelocity)
         case .dance:
+            if character == .hulk { return Motion.hulkRoar(CGFloat(stateTime)) }
             if character == .batman { return Motion.batmanThrow(CGFloat(stateTime / Motion.danceDuration)) }
             if onFloor { return character == .deadpool ? Motion.deadpoolDance(CGFloat(stateTime)) : Motion.dance(CGFloat(stateTime)) }
             crawlingNow = true
@@ -793,6 +825,10 @@ final class Buddy {
     }
 
     private func updateTilt(_ dt: CGFloat, _ world: World) {
+        if character == .hulk, state == .jump || state == .fall {
+            tilt = lerpAngle(tilt, 0, blendRate(Double(dt), 10))
+            return
+        }
         if character == .batman, state == .glide || state == .jump || state == .fall {
             tilt = lerpAngle(tilt, 0, blendRate(Double(dt), 10))
             return
@@ -878,6 +914,11 @@ final class Buddy {
     }
 
     /// Snap a web line at a point — used to shoot at a villain.
+    func thunderclap(_ scene: SKScene) {
+        guard character == .hulk, grounded, !inVehicle, !isGrabbed else { return }
+        enter(.thunderclap)
+    }
+
     func throwBatarang(at point: CGPoint, scene: SKScene) {
         guard character == .batman, grounded, !inVehicle, !isGrabbed else { return }
         face(toward: point.x)
@@ -977,9 +1018,9 @@ final class Buddy {
         let local = d.rotated(by: -tilt)
         let lx = local.x * facing
         let ly = local.y
-        let halfWidth = 19 * scale
-        let bottom = -(Rig.footReach + 8) * scale
-        let top = (Rig.headReach + (character == .batman ? 18 : 6)) * scale
+        let halfWidth = (character == .hulk ? 27 : 19) * rig.scale
+        let bottom = -(Rig.footReach + 8) * rig.scale
+        let top = (Rig.headReach + (character == .batman ? 18 : 6)) * rig.scale
         return abs(lx) <= halfWidth && ly >= bottom && ly <= top
     }
 

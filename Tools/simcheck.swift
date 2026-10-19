@@ -36,6 +36,9 @@ struct SimCheck {
         precondition(!buddy.rig.skin.deadpoolDetails && buddy.rig.root.parent === scene)
         if CommandLine.arguments.contains("--deadpool") { buddy.selectCharacter(.deadpool) }
         if CommandLine.arguments.contains("--batman") { buddy.selectCharacter(.batman) }
+        if CommandLine.arguments.contains("--hulk") { buddy.selectCharacter(.hulk) }
+        world.reach = buddy.reach
+        buddy.place(world)
         print("character            : \(buddy.character.title)")
 
         let dt = 1.0 / 60.0
@@ -68,7 +71,7 @@ struct SimCheck {
             buddy.cursor = CGPoint(x: size.width * 0.5 + sin(Double(ticks) / 300) * 400,
                                    y: size.height * 0.5 + cos(Double(ticks) / 220) * 300)
             buddy.update(dt: dt, world: world, scene: scene, web: web)
-            if buddy.character == .deadpool { precondition(web.phase == .idle) }
+            if buddy.character == .deadpool || buddy.character == .hulk { precondition(web.phase == .idle) }
 
             let name = "\(buddy.currentState)"
             stateFrames[name, default: 0] += 1
@@ -160,7 +163,7 @@ struct SimCheck {
         if upsideDownFrames < 40 { failures.append("hardly ever rested upside down (\(upsideDownFrames) frames)") }
         if uprightOnWall > 0 { failures.append("stood upright on a wall for \(uprightOnWall) frames") }
         if crawlFrames < 300 { failures.append("hardly ever crawled on a wall (\(crawlFrames) frames)") }
-        } else if buddy.character == .deadpool {
+        } else if buddy.character == .deadpool || buddy.character == .hulk {
             if swings != 0 || zips != 0 || upsideDownFrames != 0 { failures.append("Deadpool used Spider-Man traversal") }
             if surfacesSeen != ["floor"] { failures.append("Deadpool clung to a wall or ceiling") }
         }
@@ -201,8 +204,8 @@ struct SimCheck {
         buddy.place(world)
         buddy.swing(world, scene)
         if buddy.character == .spider && buddy.currentState != .swing { failures.append("menu swing command failed") }
-        if buddy.character == .deadpool && buddy.currentState == .swing { failures.append("Deadpool accepted a swing command") }
-        if buddy.character == .deadpool {
+        if buddy.character != .spider && buddy.currentState == .swing { failures.append("Deadpool accepted a swing command") }
+        if buddy.character == .deadpool || buddy.character == .hulk {
             buddy.webZip(world, scene)
             buddy.hangFromWeb(world, scene)
             buddy.hangUpsideDown(world, scene)
@@ -215,6 +218,24 @@ struct SimCheck {
         if buddy.currentState != .jump { failures.append("menu jump command failed") }
         for _ in 0..<300 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
         if !buddy.pos.x.isFinite { failures.append("state became non-finite after commands") }
+
+        if buddy.character == .hulk {
+            buddy.place(world)
+            if abs(buddy.rig.scale - buddy.scale * 1.25) > 0.001 { failures.append("Hulk size multiplier missing") }
+            buddy.thunderclap(scene)
+            if buddy.currentState != .thunderclap { failures.append("Hulk thunderclap command failed") }
+            for _ in 0..<120 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
+            buddy.punchAt(buddy.pos + CGPoint(x: 100, y: 0), scene: scene)
+            if buddy.currentState != .punch { failures.append("Hulk smash command failed") }
+            for _ in 0..<120 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
+            if !buddy.hitTest(buddy.pos + CGPoint(x: 23 * buddy.rig.scale, y: 0)) { failures.append("Hulk broad hit area missing") }
+            buddy.setScale(1.35)
+            world.reach = buddy.reach
+            buddy.place(world)
+            if abs(buddy.pos.y - world.floorY - buddy.reach) > 0.01 { failures.append("Hulk large scale floor alignment failed") }
+            buddy.setScale(0.9)
+            world.reach = buddy.reach
+        }
 
         // ---- a full scrap, start to finish
         buddy.place(world)
@@ -235,7 +256,7 @@ struct SimCheck {
                 villainSeen = true
                 if v.health < lastHealth { lastHealth = v.health }
             }
-            if lastState != buddy.currentState && (buddy.currentState == .webBlast || buddy.currentState == .pistolShot || buddy.currentState == .batarang) { blasts += 1 }
+            if lastState != buddy.currentState && (buddy.currentState == .webBlast || buddy.currentState == .pistolShot || buddy.currentState == .batarang || buddy.currentState == .thunderclap) { blasts += 1 }
             if lastState != .punch && buddy.currentState == .punch { punches += 1 }
             lastState = buddy.currentState
             if villainSeen && !battle.isActive { battleOver = true; break }
