@@ -203,8 +203,10 @@ Batmobile**. Click him to scan the area and flip a Batarang. He occasionally doe
 this during a patrol, or takes an automatic Batmobile ride.
 
 The compact black, finned Batmobile arrives along the bottom edge, parks, opens its
-canopy while Batman boards, drives with rotating wheels/headlights/exhaust/boost,
-then parks so he can step out before it leaves. Pause freezes the ride. Changing
+canopy while Batman boards, races at 1,100 points per second with rotating wheels/headlights/exhaust/boost,
+climbs both side walls through rounded corner turns, then returns to the floor so
+he can step out before it leaves. Dismiss during a climb brings the car back to
+its floor parking spot first. Pause freezes the ride. Changing
 character/display/size or resetting safely dismisses it. Fighting waits until he
 has left the car.
 

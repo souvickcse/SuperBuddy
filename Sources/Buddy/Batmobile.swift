@@ -15,6 +15,56 @@ final class Batmobile {
     private let flame = SKShapeNode()
     private let canopy = SKShapeNode(ellipseOf: CGSize(width: 37, height: 18))
     private var smokeIn: TimeInterval = 0
+    private var routeProgress: CGFloat = 0
+    private var parkingProgress: CGFloat = 0
+    private var endsVisited = 0
+    private var returningToPark = false
+    private(set) var drivingSurface: World.Surface = .floor
+    static let boostSpeed: CGFloat = 1100
+
+    /// A U-shaped route: down the left wall, around a smooth corner, along the
+    /// floor, then up the right wall. Reversing mirrors the nose without turning
+    /// the wheels away from the wall. Batman always disembarks on the floor.
+    private struct WallRoute {
+        let left: CGFloat, right: CGFloat, bottom: CGFloat, top: CGFloat, radius: CGFloat
+        var wall: CGFloat { top - bottom - radius }
+        var arc: CGFloat { radius * .pi / 2 }
+        var floor: CGFloat { right - left - 2 * radius }
+        var length: CGFloat { 2 * wall + 2 * arc + floor }
+
+        init(world: World, scale: CGFloat) {
+            left = world.leftX + 2 * scale
+            right = world.rightX - 2 * scale
+            bottom = world.floorY + 2 * scale
+            top = Swift.max(bottom + 20, world.ceilY - 110 * scale)
+            radius = Swift.max(1, Swift.min(220 * scale, (right - left) / 4, (top - bottom) / 2))
+        }
+
+        func floorProgress(at x: CGFloat) -> CGFloat {
+            wall + arc + clampf(x - left - radius, 0, floor)
+        }
+
+        func pose(at progress: CGFloat) -> (point: CGPoint, angle: CGFloat, surface: World.Surface) {
+            var s = clampf(progress, 0, length)
+            if s < wall { return (CGPoint(x: left, y: top - s), -.pi / 2, .left) }
+            s -= wall
+            if s < arc {
+                let a = .pi + s / radius
+                let center = CGPoint(x: left + radius, y: bottom + radius)
+                return (center + CGPoint.fromAngle(a, radius), a + .pi / 2, .left)
+            }
+            s -= arc
+            if s < floor { return (CGPoint(x: left + radius + s, y: bottom), 0, .floor) }
+            s -= floor
+            if s < arc {
+                let a = -.pi / 2 + s / radius
+                let center = CGPoint(x: right - radius, y: bottom + radius)
+                return (center + CGPoint.fromAngle(a, radius), a + .pi / 2, .right)
+            }
+            s -= arc
+            return (CGPoint(x: right, y: bottom + radius + s), .pi / 2, .right)
+        }
+    }
     var active: Bool { phase != .absent }
 
     init() {
@@ -77,10 +127,15 @@ final class Batmobile {
         }
         if root.parent == nil { scene.addChild(root) }
         root.setScale(buddy.scale)
+        root.zRotation = 0
+        drivingSurface = .floor
+        returningToPark = false
+        endsVisited = 0
         direction = buddy.pos.x < world.bounds.midX ? 1 : -1
         root.xScale = buddy.scale * direction
         root.position = CGPoint(x: direction > 0 ? world.leftX - 160 : world.rightX + 160, y: world.floorY + 2 * buddy.scale)
-        destination = clampf(buddy.pos.x, world.leftX + 110 * buddy.scale, world.rightX - 110 * buddy.scale)
+        let route = WallRoute(world: world, scale: buddy.scale)
+        destination = clampf(buddy.pos.x, route.left + route.radius, route.right - route.radius)
         root.isHidden = false; rideRequested = drive
         transition(.arriving)
         return true
@@ -91,11 +146,17 @@ final class Batmobile {
     func cancel(world: World, buddy: Buddy) {
         if buddy.inVehicle { buddy.leaveVehicle(world, at: root.position.x) }
         phase = .absent; root.isHidden = true
+        root.zRotation = 0; drivingSurface = .floor
         root.removeFromParent(); automaticIn = Double(randf(35, 70))
     }
 
     func dismiss(world: World, buddy: Buddy) {
         guard active else { return }
+        if phase == .driving {
+            returningToPark = true
+            direction = parkingProgress >= routeProgress ? 1 : -1
+            return
+        }
         if buddy.inVehicle { buddy.leaveVehicle(world, at: root.position.x) }
         rideRequested = false; transition(.departing)
     }
@@ -116,16 +177,18 @@ final class Batmobile {
             return
         }
         elapsed += dt
-        let stride = CGFloat(dt) * 330
+        let speed: CGFloat = phase == .driving ? Self.boostSpeed : 330
+        let stride = CGFloat(dt) * speed
         let moving = phase == .arriving || phase == .driving || phase == .departing
         flame.isHidden = phase != .driving && phase != .departing
         flame.yScale = 0.8 + 0.2 * sin(CGFloat(elapsed) * 30)
         canopy.yScale = phase == .boarding || phase == .exiting ? 0.45 : 1
-        if moving { for wheel in wheels { wheel.zRotation -= CGFloat(dt) * 20 * direction } }
+        flame.xScale = phase == .driving ? 1.65 : 1
+        if moving { for wheel in wheels { wheel.zRotation -= CGFloat(dt) * speed / (11 * buddy.scale) * direction } }
         smokeIn -= dt
         if moving, smokeIn <= 0 {
             smokeIn = 0.15
-            FX.dust(at: root.position + CGPoint(x: -direction * 72 * buddy.scale, y: 8), in: scene, count: 1, power: 0.3)
+            FX.dust(at: root.position + CGPoint(x: -direction * 72 * buddy.scale, y: 8 * buddy.scale).rotated(by: root.zRotation), in: scene, count: 1, power: 0.3)
         }
         switch phase {
         case .arriving:
@@ -145,16 +208,48 @@ final class Batmobile {
                 elapsed = 0
             } else {
                 buddy.vehicleControl(at: CGPoint(x: root.position.x, y: world.floorY + buddy.reach), seated: elapsed > 0.25)
-                if elapsed > 0.7 { direction = root.position.x < world.bounds.midX ? 1 : -1; transition(.driving) }
+                if elapsed > 0.7 {
+                    let route = WallRoute(world: world, scale: buddy.scale)
+                    routeProgress = route.floorProgress(at: root.position.x)
+                    parkingProgress = routeProgress
+                    direction = root.position.x < world.bounds.midX ? 1 : -1
+                    endsVisited = 0; returningToPark = false
+                    transition(.driving)
+                }
             }
         case .driving:
+            let route = WallRoute(world: world, scale: buddy.scale)
+            if returningToPark {
+                let distance = parkingProgress - routeProgress
+                direction = distance >= 0 ? 1 : -1
+                routeProgress += direction * Swift.min(stride, abs(distance))
+                if abs(distance) <= stride { transition(.exiting) }
+            } else {
+                var remaining = stride
+                // Consume overshoot at a wall's upper turnaround, even on a slow frame.
+                while remaining > 0 {
+                    let untilEnd = direction > 0 ? route.length - routeProgress : routeProgress
+                    let travel = Swift.min(remaining, Swift.max(0, untilEnd))
+                    routeProgress += direction * travel
+                    remaining -= travel
+                    if travel >= untilEnd {
+                        direction = -direction
+                        endsVisited += 1
+                        if endsVisited >= 2 {
+                            returningToPark = true
+                            break
+                        }
+                    } else { break }
+                }
+            }
+            let pose = route.pose(at: routeProgress)
+            root.position = pose.point
+            root.zRotation = pose.angle
             root.xScale = buddy.scale * direction
-            root.position.x += direction * stride
-            let lo = world.leftX + 100 * buddy.scale, hi = world.rightX - 100 * buddy.scale
-            if root.position.x < lo || root.position.x > hi { root.position.x = clampf(root.position.x, lo, hi); direction = -direction }
-            buddy.vehicleControl(at: CGPoint(x: root.position.x, y: world.floorY + buddy.reach), seated: true)
-            if elapsed > 5 { transition(.exiting) }
+            drivingSurface = pose.surface
+            buddy.vehicleControl(at: pose.point, seated: true)
         case .exiting:
+            root.zRotation = 0; drivingSurface = .floor
             if elapsed > 0.5 {
                 buddy.leaveVehicle(world, at: root.position.x - direction * 80 * buddy.scale)
                 transition(.departing)

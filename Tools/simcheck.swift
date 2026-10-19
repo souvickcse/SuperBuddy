@@ -337,28 +337,87 @@ struct SimCheck {
             let car = Batmobile()
             if !car.summon(world: world, scene: scene, buddy: buddy, drive: true) { failures.append("Batmobile summon failed") }
             var boarded = false, drove = false
+            var climbs: Set<String> = []
+            var maxDriveSpeed: CGFloat = 0
+            var lastCarPosition = car.root.position
+            var wasDriving = false
             for _ in 0..<2400 {
                 car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
                 buddy.update(dt: dt, world: world, scene: scene, web: web)
                 boarded = boarded || buddy.inVehicle
                 drove = drove || car.phase == .driving
+                if car.phase == .driving, wasDriving {
+                    let delta = car.root.position - lastCarPosition
+                    maxDriveSpeed = max(maxDriveSpeed, delta.length / CGFloat(dt))
+                    if delta.y > 1, abs(cos(car.root.zRotation)) < 0.01 {
+                        climbs.insert("\(car.drivingSurface)")
+                    }
+                    if !world.bounds.contains(car.root.position) { failures.append("Batmobile escaped the display while wall driving"); break }
+                }
+                if car.phase == .exiting {
+                    if abs(car.root.zRotation) > 0.001 || abs(car.root.position.y - world.floorY - 2 * buddy.scale) > 0.01 {
+                        failures.append("Batman tried to exit away from the floor")
+                    }
+                }
+                wasDriving = car.phase == .driving
+                lastCarPosition = car.root.position
                 if !car.active { break }
             }
             if !boarded || !drove || car.active || buddy.inVehicle || buddy.rig.root.isHidden {
                 failures.append("Batmobile trip did not board/drive/exit/clean up")
             }
-            // Pause must freeze the car; cancel/switch must restore Batman.
+            if !climbs.contains("left") || !climbs.contains("right") { failures.append("Batmobile did not climb both side walls") }
+            if maxDriveSpeed < 1000 { failures.append("Batmobile did not reach boost speed") }
+            // Pause on a wall must freeze position and rotation; dismiss returns to the floor.
             buddy.place(world)
             _ = car.summon(world: world, scene: scene, buddy: buddy, drive: true)
-            for _ in 0..<600 { car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false) }
+            var pausedOnWall = false
+            for _ in 0..<1200 {
+                car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
+                if car.phase == .driving, car.root.position.y > world.floorY + 250 {
+                    pausedOnWall = true; break
+                }
+            }
+            if !pausedOnWall { failures.append("Batmobile did not reach a wall for pause test") }
             buddy.paused = true
             let parkedAt = car.root.position
+            let parkedAngle = car.root.zRotation
             for _ in 0..<120 { car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false) }
-            if car.root.position != parkedAt { failures.append("Batmobile moved while paused") }
+            if car.root.position != parkedAt || car.root.zRotation != parkedAngle { failures.append("Batmobile moved or rotated while paused") }
             buddy.paused = false
+            car.dismiss(world: world, buddy: buddy)
+            if !buddy.inVehicle { failures.append("Batman was ejected in mid-climb") }
+            for _ in 0..<2400 {
+                car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
+                if !car.active { break }
+            }
+            if car.active || buddy.inVehicle || buddy.rig.root.isHidden { failures.append("Wall-ride dismissal did not restore Batman") }
             car.cancel(world: world, buddy: buddy)
             if buddy.inVehicle || buddy.rig.root.isHidden || car.root.parent != nil { failures.append("Batmobile cancel left hidden buddy or car") }
-            print("Batmobile            : boarded=\(boarded), drove=\(drove), cleaned up=\(!car.active)")
+            print("Batmobile            : boarded=\(boarded), climbs=\(climbs.sorted()), speed=\(Int(maxDriveSpeed))pt/s, cleaned up=\(!car.active)")
+            // Different scales, portrait geometry and coarse frames must still finish a trip.
+            for (testSize, testScale, testDT) in [(CGSize(width: 900, height: 1440), CGFloat(1.35), 1.0 / 30.0),
+                                                  (CGSize(width: 800, height: 600), CGFloat(0.62), 0.05)] {
+                let driver = Buddy()
+                driver.selectCharacter(.batman); driver.setScale(testScale)
+                var testWorld = World()
+                testWorld.bounds = CGRect(origin: .zero, size: testSize); testWorld.reach = driver.reach
+                driver.place(testWorld)
+                let vehicle = Batmobile()
+                _ = vehicle.summon(world: testWorld, scene: scene, buddy: driver, drive: true)
+                var visitedLeft = false, visitedRight = false
+                for _ in 0..<2400 {
+                    vehicle.update(dt: testDT, world: testWorld, scene: scene, buddy: driver, automatic: false)
+                    if vehicle.phase == .driving {
+                        visitedLeft = visitedLeft || vehicle.drivingSurface == .left
+                        visitedRight = visitedRight || vehicle.drivingSurface == .right
+                        if !testWorld.bounds.contains(vehicle.root.position) { failures.append("Scaled Batmobile left screen"); break }
+                    }
+                    if !vehicle.active { break }
+                }
+                if vehicle.active || driver.inVehicle || !visitedLeft || !visitedRight { failures.append("Scaled/coarse-frame wall ride failed") }
+                vehicle.cancel(world: testWorld, buddy: driver)
+            }
         }
         print("archetypes           : " + archetypeReport.joined(separator: ", "))
 
