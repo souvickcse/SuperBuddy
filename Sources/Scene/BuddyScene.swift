@@ -222,8 +222,17 @@ final class BuddyScene: SKScene {
     }
 
     var userScale: CGFloat = 0.9
+    private(set) var timing = TimingSettings.defaults
+
+    func setTiming(_ settings: TimingSettings) {
+        timing = settings
+        buddy.setAutomaticActionInterval(settings.actionInterval)
+        battle.setAutomaticInterval(settings.villainInterval)
+        settings.save()
+    }
 
     func loadPreferences() {
+        setTiming(TimingSettings.load())
         let character = BuddyCharacter(rawValue: UserDefaults.standard.string(forKey: "buddyCharacter") ?? "") ?? .spider
         buddy.selectCharacter(character)
         let stored = UserDefaults.standard.object(forKey: "buddyScale") as? Double

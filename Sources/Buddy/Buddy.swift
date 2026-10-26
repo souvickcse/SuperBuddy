@@ -22,6 +22,19 @@ final class Buddy {
     private(set) var inVehicle = false
     var scale: CGFloat = 0.9 { didSet { rig.scale = scale * character.skin.bodyScale } }
 
+    private(set) var automaticActionInterval: TimeInterval = TimingSettings.defaults.actionInterval
+    private var automaticActionIn: TimeInterval = TimingSettings.defaults.actionInterval
+    var canPerformAutomaticAction: Bool {
+        automaticActionInterval > 0 && automaticActionIn <= 0 && !paused && !inBattle && !inVehicle && !isGrabbed
+    }
+
+    func setAutomaticActionInterval(_ seconds: TimeInterval) {
+        automaticActionInterval = seconds.isFinite ? max(0, seconds) : TimingSettings.defaults.actionInterval
+        automaticActionIn = automaticActionInterval
+    }
+
+    func didPerformAutomaticAction() { automaticActionIn = automaticActionInterval }
+
     // MARK: Rig + simulation
 
     private(set) var rig = Rig()
@@ -156,6 +169,7 @@ final class Buddy {
         guard !inVehicle else { return }
         let cdt = CGFloat(dt)
         if !paused {
+            if !inBattle, !isGrabbed { automaticActionIn = max(0, automaticActionIn - max(0, dt)) }
             animTime += dt
             stateTime += dt
             step(cdt, dt, world, scene)
@@ -322,7 +336,8 @@ final class Buddy {
     private func stepGrounded(_ dt: CGFloat, _ world: World, _ scene: SKScene) {
         if character != .spider, state == .walk, !inBattle, !pressing {
             walkingSlashIn -= TimeInterval(dt)
-            if walkingSlashIn <= 0 {
+            if walkingSlashIn <= 0, canPerformAutomaticAction {
+                didPerformAutomaticAction()
                 walkingSlashIn = Double(randf(6, 14))
                 resumeWalkAfterSlash = true
                 enter(character == .batman ? .dance : .punch)
@@ -531,6 +546,13 @@ final class Buddy {
 
     private func decide(_ world: World, _ scene: SKScene) {
         guard !paused, !isGrabbed, !inBattle else { return }
+        guard canPerformAutomaticAction else {
+            enter(chance(0.55) ? .walk : .stand)
+            return
+        }
+        defer {
+            if ![State.stand, .walk, .run].contains(state) { didPerformAutomaticAction() }
+        }
         if character == .hulk {
             let roll = randf(0, 1)
             if roll < 0.32 { enter(.walk) }

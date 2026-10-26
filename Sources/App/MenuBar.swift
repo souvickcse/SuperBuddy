@@ -9,7 +9,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private var characterMenu: NSMenu?
 
     private enum Tag: Int {
-        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, batmobile, smash, clap, batSignal
+        case come = 1, dance, jump, swing, hang, pause, reset, zipUp, zipSide, restUpsideDown, villain, katana, pistol, batarang, combo, grapple, glide, batmobile, smash, clap, batSignal, settings
         case sizeSmall = 100, sizeMedium, sizeLarge
     }
 
@@ -76,6 +76,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         displayMenu = screens
         menu.addItem(screenItem)
 
+        menu.addItem(make("Settings…", .settings, ","))
         menu.addItem(make("Send back home", .reset, "r"))
         menu.addItem(make("Pause / Resume", .pause, "p"))
         menu.addItem(.separator())
@@ -155,6 +156,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     @objc private func handle(_ sender: NSMenuItem) {
         guard let tag = Tag(rawValue: sender.tag) else { return }
         switch tag {
+        case .settings: showTimingSettings()
         case .come: BuddyCenter.shared.come()
         case .dance: BuddyCenter.shared.dance()
         case .jump: BuddyCenter.shared.jump()
@@ -179,6 +181,37 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         case .sizeSmall: BuddyCenter.shared.setScale(0.62)
         case .sizeMedium: BuddyCenter.shared.setScale(0.9)
         case .sizeLarge: BuddyCenter.shared.setScale(1.35)
+        }
+    }
+
+    private func showTimingSettings() {
+        guard let scene = BuddyCenter.shared.scene else { return }
+        let alert = NSAlert()
+        alert.messageText = "Timing settings"
+        alert.informativeText = "Set the wait between automatic events. Walking continues normally. Use 0 to turn off that type of event. Menu actions still work immediately."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        let form = NSView(frame: NSRect(x: 0, y: 0, width: 350, height: 105))
+        let actionField = NSTextField(string: String(Int(scene.timing.actionInterval)))
+        let villainField = NSTextField(string: String(Int(scene.timing.villainInterval)))
+        for (label, field, y) in [("Random actions (seconds)", actionField, CGFloat(70)),
+                                  ("Villains (seconds)", villainField, CGFloat(32))] {
+            let title = NSTextField(labelWithString: label)
+            title.frame = NSRect(x: 0, y: y + 3, width: 230, height: 20)
+            field.frame = NSRect(x: 245, y: y, width: 90, height: 26)
+            form.addSubview(title); form.addSubview(field)
+        }
+        alert.accessoryView = form
+        NSApp.activate(ignoringOtherApps: true)
+        while alert.runModal() == .alertFirstButtonReturn {
+            guard let actions = Int(actionField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)),
+                  let villains = Int(villainField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)),
+                  (0...3600).contains(actions), (0...7200).contains(villains) else {
+                alert.informativeText = "Enter whole seconds: actions 0–3600 and villains 0–7200. Use 0 to disable automatic events."
+                continue
+            }
+            scene.setTiming(TimingSettings(actionInterval: Double(actions), villainInterval: Double(villains)))
+            break
         }
     }
 

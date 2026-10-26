@@ -12,7 +12,13 @@ final class Battle {
     private(set) var lastOpponent: String?
 
     /// Seconds until the next villain turns up on his own.
-    private var nextFightIn: TimeInterval = 90
+    private var automaticInterval: TimeInterval = TimingSettings.defaults.villainInterval
+    private var nextFightIn: TimeInterval = TimingSettings.defaults.villainInterval
+
+    func setAutomaticInterval(_ seconds: TimeInterval) {
+        automaticInterval = seconds.isFinite ? max(0, seconds) : TimingSettings.defaults.villainInterval
+        nextFightIn = automaticInterval
+    }
     private var phaseTime: TimeInterval = 0
     private var buddyCooldown: TimeInterval = 0
     private var wasWindingUp = false
@@ -23,12 +29,13 @@ final class Battle {
     // MARK: Frame
 
     func update(dt: TimeInterval, world: World, scene: SKScene, buddy: Buddy) {
-        guard !buddy.inVehicle else { return }
+        guard !buddy.inVehicle, !buddy.paused else { return }
         phaseTime += dt
 
         switch phase {
         case .idle:
-            nextFightIn -= dt
+            guard automaticInterval > 0, buddy.currentState != .grabbed else { return }
+            nextFightIn -= max(0, dt)
             if nextFightIn <= 0 { summon(world: world, scene: scene, buddy: buddy) }
 
         case .incoming:
@@ -203,7 +210,7 @@ final class Battle {
         buddy.inBattle = false
         phase = .idle
         phaseTime = 0
-        nextFightIn = Double(randf(70, 165))
+        nextFightIn = automaticInterval
         wasWindingUp = false
         BuddyDebug.log("battle: over, next in \(Int(nextFightIn))s")
     }

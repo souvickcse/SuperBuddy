@@ -10,6 +10,78 @@ import SpriteKit
 
 @main
 struct SimCheck {
+    static func checkTiming() -> [String] {
+        var failures: [String] = []
+        let suite = "com.souvickghosh.superbuddy.timing-test.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        if TimingSettings.load(from: defaults) != .defaults { failures.append("Timing defaults changed") }
+        let saved = TimingSettings(actionInterval: 75, villainInterval: 600)
+        saved.save(to: defaults)
+        if TimingSettings.load(from: defaults) != saved { failures.append("Timing settings were not remembered") }
+        let disabled = TimingSettings(actionInterval: 0, villainInterval: 0)
+        disabled.save(to: defaults)
+        if TimingSettings.load(from: defaults) != disabled { failures.append("Disabled timing was not remembered") }
+
+        let scene = SKScene(size: CGSize(width: 1680, height: 1000))
+        var world = World(); world.bounds = CGRect(origin: .zero, size: scene.size)
+        let buddy = Buddy(); world.reach = buddy.reach
+        let web = WebLine(); scene.addChild(web); scene.addChild(buddy.rig.root)
+        buddy.place(world)
+        buddy.setAutomaticActionInterval(60)
+        buddy.update(dt: 10, world: world, scene: scene, web: web)
+        buddy.paused = true
+        buddy.update(dt: 100, world: world, scene: scene, web: web)
+        buddy.paused = false
+        buddy.update(dt: 49, world: world, scene: scene, web: web)
+        if buddy.canPerformAutomaticAction { failures.append("Action cooldown expired too early or ran while paused") }
+        buddy.update(dt: 1, world: world, scene: scene, web: web)
+        if !buddy.canPerformAutomaticAction { failures.append("Action cooldown did not expire") }
+        buddy.didPerformAutomaticAction()
+        if buddy.canPerformAutomaticAction { failures.append("Shared action cooldown was not reset") }
+        buddy.setAutomaticActionInterval(0)
+        buddy.place(world)
+        for _ in 0..<3600 {
+            buddy.update(dt: 1.0 / 60.0, world: world, scene: scene, web: web)
+            if ![Buddy.State.stand, .walk].contains(buddy.currentState) {
+                failures.append("A random special action ran with actions disabled"); break
+            }
+        }
+        buddy.jump(world)
+        if buddy.currentState != .jump { failures.append("Timing settings disabled a manual command") }
+        buddy.place(world)
+        let battle = Battle(); battle.setAutomaticInterval(300)
+        battle.update(dt: 299, world: world, scene: scene, buddy: buddy)
+        if battle.isActive { failures.append("Villain arrived before configured delay") }
+        buddy.paused = true
+        battle.update(dt: 600, world: world, scene: scene, buddy: buddy)
+        buddy.paused = false
+        if battle.isActive { failures.append("Villain timer ran while paused") }
+        battle.update(dt: 1, world: world, scene: scene, buddy: buddy)
+        if !battle.isActive { failures.append("Villain did not arrive after configured delay") }
+        battle.setAutomaticInterval(600)
+        if !battle.isActive { failures.append("Changing timing interrupted the active battle") }
+        battle.villain?.remove(); buddy.inBattle = false; buddy.place(world)
+        let manualBattle = Battle(); manualBattle.setAutomaticInterval(0)
+        manualBattle.update(dt: 10000, world: world, scene: scene, buddy: buddy)
+        if manualBattle.isActive { failures.append("A disabled villain timer spawned an enemy") }
+        if !manualBattle.summon(world: world, scene: scene, buddy: buddy) { failures.append("Disabled timer blocked manual villain summon") }
+        manualBattle.villain?.remove(); buddy.inBattle = false
+        buddy.selectCharacter(.batman); buddy.place(world)
+        let signal = BatSignal(), car = Batmobile()
+        for _ in 0..<120 {
+            signal.update(dt: 1, world: world, buddy: buddy, scene: scene, automatic: true)
+            car.update(dt: 1, world: world, scene: scene, buddy: buddy, automatic: true)
+        }
+        if signal.active || car.active { failures.append("Beacon or car ignored disabled random actions") }
+        if !signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Disabled timer blocked manual beacon") }
+        signal.cancel(buddy: buddy)
+        if !car.summon(world: world, scene: scene, buddy: buddy, drive: true) { failures.append("Disabled timer blocked manual car") }
+        car.cancel(world: world, buddy: buddy)
+        print("Timing settings      : persistence, shared cooldown, pause, disabling and manual overrides checked")
+        return failures
+    }
+
     static func main() {
         let size = CGSize(width: 1680, height: 1000)
         let scene = SKScene(size: size)
@@ -39,6 +111,8 @@ struct SimCheck {
         if CommandLine.arguments.contains("--hulk") { buddy.selectCharacter(.hulk) }
         world.reach = buddy.reach
         buddy.place(world)
+        // Keep the broad animation smoke test fast; timing policy is checked separately.
+        buddy.setAutomaticActionInterval(0.5)
         print("character            : \(buddy.character.title)")
 
         let dt = 1.0 / 60.0
@@ -138,7 +212,7 @@ struct SimCheck {
         print("wall posture         : \(crawlFrames) crawl frames, \(uprightOnWall) upright-on-wall frames")
         print("blinks               : \(blinks) (peak closure \(String(format: "%.2f", maxBlink)))")
 
-        var failures: [String] = []
+        var failures: [String] = checkTiming()
         if unstable { failures.append("simulation went non-finite") }
         if !insideX || !insideY { failures.append("buddy escaped the screen") }
         if !surfacesSeen.contains("floor") { failures.append("never stood on the floor") }
@@ -379,6 +453,7 @@ struct SimCheck {
             // and respect their cooldown after revealing Batman.
             buddy.place(world)
             let automaticSignal = BatSignal()
+            buddy.update(dt: 1, world: world, scene: scene, web: web)
             buddy.paused = true
             for _ in 0..<3600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
             if automaticSignal.active { failures.append("Automatic Bat-Beacon started while paused") }

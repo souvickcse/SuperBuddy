@@ -253,3 +253,17 @@ as he moves. This is a visual camouflage effect, not an invulnerability power.
 Pause freezes the sequence. Reset, character/size/display changes, dragging or
 boarding the Buddy-Mobile safely reveal him and clean up the effect. Repeated clicks
 while it is playing do not create overlapping swarms.
+
+## Timing settings
+
+Open **Settings…** (⌘,) in the shield menu to choose the interval for **Random actions**
+and **Villains**, in seconds. The slower defaults are **30 seconds** between automatic
+actions and **300 seconds (5 minutes)** between villain appearances. Settings are
+remembered between launches and shared by all buddies. Set either value to **0** to
+disable that type of automatic event. Manual menu actions and summoning still work.
+
+The action interval is a shared cooldown for jumps, dances, smashes, patrol flourishes,
+the Bat-Beacon and Buddy-Mobile rides. Walking and idle poses continue normally.
+The next action is chosen randomly when the cooldown and the buddy's current activity
+allow it. Pausing freezes the timers. Saving new values restarts their countdowns;
+changing the villain interval during a fight applies to the next fight.

@@ -170,8 +170,9 @@ final class Batmobile {
         if !active {
             if automatic {
                 automaticIn -= dt
-                if automaticIn <= 0, summon(world: world, scene: scene, buddy: buddy, drive: true) {
+                if automaticIn <= 0, buddy.canPerformAutomaticAction, summon(world: world, scene: scene, buddy: buddy, drive: true) {
                     automaticIn = Double(randf(35, 70))
+                    buddy.didPerformAutomaticAction()
                 }
             }
             return

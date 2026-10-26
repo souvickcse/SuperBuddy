@@ -72,7 +72,8 @@ final class BatSignal {
                   !buddy.inBattle, !buddy.inVehicle, buddy.grounded,
                   [.stand, .walk, .run].contains(buddy.currentState) else { return }
             automaticIn -= Swift.max(0, dt)
-            if automaticIn <= 0 { _ = start(world: world, scene: scene, buddy: buddy) }
+            if automaticIn <= 0, buddy.canPerformAutomaticAction,
+               start(world: world, scene: scene, buddy: buddy) { buddy.didPerformAutomaticAction() }
             return
         }
         guard buddy.character == .batman, !buddy.inVehicle, buddy.currentState != .grabbed else {
