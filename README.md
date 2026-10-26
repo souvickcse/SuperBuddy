@@ -1,10 +1,10 @@
-# Super Buddy 🕷️
+# Super Buddy ⚡
 
 A tiny superhero who lives on your Mac desktop.
 
 Use **Choose Buddy → Spider-Buddy / Pool-Buddy / Bat-Buddy / Smash-Buddy** in the shield menu to switch characters.
-Your choice is remembered between launches. Pool-Buddy faces Blade-Buddy, Tank-Buddy,
-Copycat-Buddy and Mirror-Buddy; automatic fights and **Summon a villain!** both use
+Your choice is remembered between launches. Pool-Buddy faces Blade-Baddie, Tank-Baddie,
+Copycat-Baddie and Mirror-Baddie; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Pool-Buddy wears his red-and-black mask,
 utility belt and twin katana scabbards, with a swaggering walk, cheeky idle pose and
 his own goofy dance. Pool-Buddy stays on the floor, does somersault jumps and knee-rub landings, and fights
@@ -31,7 +31,7 @@ shockwave and all.
 | Hangs from a web | random, or menu → **Go hang from the ceiling** |
 | Rests while crawling | he simply stops, looks up and down the surface, breathes and blinks |
 | Rests **upside down** on the ceiling | random, or menu → **Rest upside-down on the ceiling** — a short thread catches him by the ankle and he dangles head-down |
-| **Villains turn up and fight him** | every couple of minutes one of **ten** rogues drops in; the buddy webs him, charges in and trades punches until he is knocked out and legs it — or menu → **Summon a villain!** |
+| **Villains turn up and fight him** | every 5 minutes by default, a baddie from the selected buddy’s roster drops in; the buddy webs him, charges in and trades punches until he is knocked out and legs it — or menu → **Summon a villain!** |
 | **Poke him (single click)** | he does a little dance step with music notes |
 | **Drag him and let go** | he flails around, falls, and does a **superhero landing** with dust, cracks and a shockwave |
 | Double click | he dances right away |
@@ -76,9 +76,16 @@ Open **Super Buddy** from Applications, then use the shield icon in the menu bar
 This release is ad-hoc signed, not notarized. If macOS blocks the first launch,
 use **System Settings → Privacy & Security → Open Anyway** for Super Buddy.
 
+## Fork and extend
+
+New contributors can start with [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[developer guide](docs/DEVELOPMENT.md). The guide covers adding a buddy, drawing a
+costume, building animations, wiring menu and automatic actions, adding baddies,
+and testing and packaging a fork.
+
 ## Build & run
 
-Requirements: macOS 13+, Xcode command line tools, and [xcodegen](https://github.com/yonaskolb/XcodeGen)
+Requirements: macOS 13+, Xcode (including its command line tools), and [xcodegen](https://github.com/yonaskolb/XcodeGen)
 (`brew install xcodegen`).
 
 ```bash
@@ -93,6 +100,7 @@ make run        # build + launch
 make build      # build only
 make preview    # re-render docs/preview.png (all animations)
 make check      # headless physics/behaviour smoke test
+make check-all  # all four buddies plus timing, effects and vehicle checks
 make icon       # re-render the app icon
 make dist       # shareable universal build -> dist/*.zip and dist/*.dmg
 make clean      # remove build artefacts
@@ -167,14 +175,14 @@ Ten villains, and they do not all fight the same way:
 
 | Archetype | Who | How they fight |
 |---|---|---|
-| `brawler` | Sand-Buddy, Hunter-Buddy | walks in and trades punches |
-| `charger` | Armor-Buddy, Shadow-Buddy, Boss-Buddy | backs off, winds up, then barrels in at speed |
-| `flyer` | Goblin-Buddy, Wing-Buddy | hovers overhead and dives on him (wings on the Wing-Buddy) |
-| `shooter` | Tentacle-Buddy, Spark-Buddy, Mirage-Buddy | keeps its distance and fires bolts |
+| `brawler` | Sand-Baddie, Hunter-Baddie | walks in and trades punches |
+| `charger` | Armor-Baddie, Shadow-Baddie, Boss-Baddie | backs off, winds up, then barrels in at speed |
+| `flyer` | Goblin-Baddie, Wing-Baddie | hovers overhead and dives on him (wings on the Wing-Baddie) |
+| `shooter` | Tentacle-Baddie, Spark-Baddie, Mirage-Baddie | keeps its distance and fires bolts |
 
 They are all the *same rig* wearing a different `Skin` — colours, headgear (a bonnet,
-horns, a dome, a crest, a beak, a mane) and back gear (Tentacle-Buddy's four mechanical arms,
-the Wing-Buddy's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
+horns, a dome, a crest, a beak, a mane) and back gear (Tentacle-Baddie's four mechanical arms,
+the Wing-Baddie's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
 archetype decides the fight. A new villain is about ten lines of colour choices.
 
 A `Battle` director (`Sources/Scene/Battle.swift`) picks one at random, drops him in
@@ -220,8 +228,8 @@ its floor parking spot first. Pause freezes the ride. Changing
 character/display/size or resetting safely dismisses it. Fighting waits until he
 has left the car.
 
-His enemies are **Jester-Buddy** (gag bombs), **Mallet-Buddy** (bouncing approach and mallet),
-**Brute-Buddy** (heavy charges), and **Frost-Buddy** (ice bolts). They are stylized procedural
+His enemies are **Jester-Baddie** (gag bombs), **Mallet-Baddie** (bouncing approach and mallet),
+**Brute-Baddie** (heavy charges), and **Frost-Baddie** (ice bolts). They are stylized procedural
 interpretations using the existing battle system.
 
 Run `./.build/simcheck --batman` after `make check` to exercise his movement, all four
@@ -235,7 +243,7 @@ occasionally stops walking for a two-handed smash. Click him for a roar and flex
 His menu provides **Smash-Buddy smash!** (⌘K), **Thunderclap** (⌘T), **Super leap** (⌘J),
 and **Roar & flex** (⌘D). He has no webs, guns, swords, grappling cable or vehicle.
 
-His opponents are **Mutant-Buddy**, **Red-Buddy**, **Brain-Buddy**, and **Metal-Buddy**.
+His opponents are **Mutant-Baddie**, **Red-Baddie**, **Brain-Baddie**, and **Metal-Baddie**.
 He closes in for a smash or uses a thunderclap shockwave from a distance.
 `./.build/simcheck --hulk` checks his movement, attacks, size/hit area and all four
 opponents after `make check`.

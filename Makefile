@@ -1,7 +1,10 @@
 APP := SuperBuddy
 CONF ?= Release
 
-.PHONY: all run build gen preview check icon dist clean
+# New buddy/support helpers are automatically included in headless tools.
+CORE_SOURCES := $(sort $(wildcard Sources/Support/*.swift Sources/Buddy/*.swift) Sources/Scene/World.swift Sources/Scene/Battle.swift)
+
+.PHONY: all run build gen preview check check-all icon dist clean
 
 all: run
 
@@ -17,14 +20,19 @@ run: build
 # renders docs/preview.png: every animation, straight from the real rig
 preview:
 	mkdir -p .build .mcache docs
-	swiftc -module-cache-path "$$PWD/.mcache" -o .build/preview Sources/Support/MathUtil.swift Sources/Support/TimingSettings.swift Sources/Buddy/Pose.swift Sources/Buddy/Motions.swift Sources/Buddy/Skin.swift Sources/Buddy/Rig.swift Sources/Support/Debug.swift Sources/Buddy/WebLine.swift Sources/Buddy/Effects.swift Sources/Buddy/Villain.swift Sources/Scene/World.swift Sources/Scene/Battle.swift Sources/Buddy/Buddy.swift Sources/Buddy/Batmobile.swift Sources/Buddy/BatSignal.swift Tools/preview.swift
+	swiftc -module-cache-path "$$PWD/.mcache" -o .build/preview $(CORE_SOURCES) Tools/preview.swift
 	./.build/preview docs/preview.png
 
 # headless physics/behaviour smoke test
 check:
 	mkdir -p .build .mcache
-	swiftc -parse-as-library -module-cache-path "$$PWD/.mcache" -o .build/simcheck Sources/Support/MathUtil.swift Sources/Support/TimingSettings.swift Sources/Support/Debug.swift Sources/Buddy/Pose.swift Sources/Buddy/Motions.swift Sources/Buddy/Skin.swift Sources/Buddy/Rig.swift Sources/Buddy/WebLine.swift Sources/Buddy/Effects.swift Sources/Buddy/Villain.swift Sources/Scene/World.swift Sources/Scene/Battle.swift Sources/Buddy/Buddy.swift Sources/Buddy/Batmobile.swift Sources/Buddy/BatSignal.swift Tools/simcheck.swift
+	swiftc -parse-as-library -module-cache-path "$$PWD/.mcache" -o .build/simcheck $(CORE_SOURCES) Tools/simcheck.swift
 	./.build/simcheck
+
+check-all: check
+	./.build/simcheck --deadpool
+	./.build/simcheck --batman
+	./.build/simcheck --hulk
 
 icon:
 	./Tools/make_icon.sh

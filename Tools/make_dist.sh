@@ -9,7 +9,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="SuperBuddy"
-VERSION="1.1"
 DIST="dist"
 APP="build/Build/Products/Release/${APP_NAME}.app"
 
@@ -31,7 +30,8 @@ echo "==> checking binary"
 lipo -info "$APP/Contents/MacOS/${APP_NAME}"
 codesign --verify --deep --strict "$APP" && echo "    signature ok (ad-hoc)"
 V=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
-echo "    version $V"
+VERSION="$V"
+echo "    version $VERSION"
 
 # Optional: set SIGN_IDENTITY to a "Developer ID Application: ..." identity to
 # produce a build that opens with no warning at all, and NOTARY_PROFILE to a
