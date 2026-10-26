@@ -3,8 +3,8 @@
 A tiny superhero who lives on your Mac desktop.
 
 Use **Choose Buddy → Spider-Buddy / Pool-Buddy / Bat-Buddy / Smash-Buddy** in the shield menu to switch characters.
-Your choice is remembered between launches. Pool-Buddy faces Blade-Rival, Tank-Rival,
-Copycat-Rival and Mirror-Rival; automatic fights and **Summon a villain!** both use
+Your choice is remembered between launches. Pool-Buddy faces Blade-Buddy, Tank-Buddy,
+Copycat-Buddy and Mirror-Buddy; automatic fights and **Summon a villain!** both use
 the selected buddy’s enemy roster. Pool-Buddy wears his red-and-black mask,
 utility belt and twin katana scabbards, with a swaggering walk, cheeky idle pose and
 his own goofy dance. Pool-Buddy stays on the floor, does somersault jumps and knee-rub landings, and fights
@@ -167,14 +167,14 @@ Ten villains, and they do not all fight the same way:
 
 | Archetype | Who | How they fight |
 |---|---|---|
-| `brawler` | Sand-Rival, Hunter-Rival | walks in and trades punches |
-| `charger` | Armor-Rival, Shadow-Rival, Boss-Rival | backs off, winds up, then barrels in at speed |
-| `flyer` | Goblin-Rival, Wing-Rival | hovers overhead and dives on him (wings on the Wing-Rival) |
-| `shooter` | Tentacle-Rival, Spark-Rival, Mirage-Rival | keeps its distance and fires bolts |
+| `brawler` | Sand-Buddy, Hunter-Buddy | walks in and trades punches |
+| `charger` | Armor-Buddy, Shadow-Buddy, Boss-Buddy | backs off, winds up, then barrels in at speed |
+| `flyer` | Goblin-Buddy, Wing-Buddy | hovers overhead and dives on him (wings on the Wing-Buddy) |
+| `shooter` | Tentacle-Buddy, Spark-Buddy, Mirage-Buddy | keeps its distance and fires bolts |
 
 They are all the *same rig* wearing a different `Skin` — colours, headgear (a bonnet,
-horns, a dome, a crest, a beak, a mane) and back gear (Tentacle-Rival's four mechanical arms,
-the Wing-Rival's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
+horns, a dome, a crest, a beak, a mane) and back gear (Tentacle-Buddy's four mechanical arms,
+the Wing-Buddy's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
 archetype decides the fight. A new villain is about ten lines of colour choices.
 
 A `Battle` director (`Sources/Scene/Battle.swift`) picks one at random, drops him in
@@ -220,8 +220,8 @@ its floor parking spot first. Pause freezes the ride. Changing
 character/display/size or resetting safely dismisses it. Fighting waits until he
 has left the car.
 
-His enemies are **Jester-Rival** (gag bombs), **Mallet-Rival** (bouncing approach and mallet),
-**Brute-Rival** (heavy charges), and **Frost-Rival** (ice bolts). They are stylized procedural
+His enemies are **Jester-Buddy** (gag bombs), **Mallet-Buddy** (bouncing approach and mallet),
+**Brute-Buddy** (heavy charges), and **Frost-Buddy** (ice bolts). They are stylized procedural
 interpretations using the existing battle system.
 
 Run `./.build/simcheck --batman` after `make check` to exercise his movement, all four
@@ -235,7 +235,7 @@ occasionally stops walking for a two-handed smash. Click him for a roar and flex
 His menu provides **Smash-Buddy smash!** (⌘K), **Thunderclap** (⌘T), **Super leap** (⌘J),
 and **Roar & flex** (⌘D). He has no webs, guns, swords, grappling cable or vehicle.
 
-His opponents are **Mutant-Rival**, **Red-Rival**, **Brain-Rival**, and **Metal-Rival**.
+His opponents are **Mutant-Buddy**, **Red-Buddy**, **Brain-Buddy**, and **Metal-Buddy**.
 He closes in for a smash or uses a thunderclap shockwave from a distance.
 `./.build/simcheck --hulk` checks his movement, attacks, size/hit area and all four
 opponents after `make check`.

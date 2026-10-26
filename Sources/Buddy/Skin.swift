@@ -78,25 +78,25 @@ struct Skin {
     static let hulkVillains: [Skin] = [
         { () -> Skin in
             var s = Skin.hulk
-            s.name = "Mutant-Rival"; s.costume = .abomination
+            s.name = "Mutant-Buddy"; s.costume = .abomination
             s.suit = SKColor(srgbRed: 0.36, green: 0.48, blue: 0.18, alpha: 1)
             s.limb = s.suit; s.bodyScale = 1.4; s.archetype = .charger
             return s
         }(),
         { () -> Skin in
             var s = Skin.hulk
-            s.name = "Red-Rival"; s.costume = .redHulk
+            s.name = "Red-Buddy"; s.costume = .redHulk
             s.suit = SKColor(srgbRed: 0.75, green: 0.16, blue: 0.12, alpha: 1)
             s.suitDark = SKColor(srgbRed: 0.44, green: 0.07, blue: 0.05, alpha: 1)
             s.limb = s.suit; s.limbDark = s.suitDark; s.archetype = .charger
             return s
         }(),
-        Skin(name: "Brain-Rival", suit: SKColor(srgbRed: 0.28, green: 0.72, blue: 0.25, alpha: 1),
+        Skin(name: "Brain-Buddy", suit: SKColor(srgbRed: 0.28, green: 0.72, blue: 0.25, alpha: 1),
              suitDark: SKColor(srgbRed: 0.16, green: 0.42, blue: 0.14, alpha: 1),
              limb: SKColor(srgbRed: 0.75, green: 0.42, blue: 0.13, alpha: 1),
              limbDark: SKColor(srgbRed: 0.43, green: 0.22, blue: 0.06, alpha: 1),
              webbing: false, emblem: false, archetype: .shooter, costume: .leader),
-        Skin(name: "Metal-Rival", suit: SKColor(white: 0.6, alpha: 1),
+        Skin(name: "Metal-Buddy", suit: SKColor(white: 0.6, alpha: 1),
              suitDark: SKColor(white: 0.35, alpha: 1),
              limb: SKColor(white: 0.5, alpha: 1), limbDark: SKColor(white: 0.25, alpha: 1),
              webbing: false, emblem: false, bodyScale: 1.2, costume: .absorbingMan)
@@ -108,20 +108,20 @@ struct Skin {
         webbing: false, emblem: false, headgear: .cowl, eyeScale: 0.65, costume: .batman)
 
     static let batmanVillains: [Skin] = [
-        Skin(name: "Jester-Rival", suit: SKColor(srgbRed: 0.48, green: 0.19, blue: 0.64, alpha: 1),
+        Skin(name: "Jester-Buddy", suit: SKColor(srgbRed: 0.48, green: 0.19, blue: 0.64, alpha: 1),
              suitDark: SKColor(srgbRed: 0.23, green: 0.08, blue: 0.35, alpha: 1),
              limb: SKColor(srgbRed: 0.37, green: 0.16, blue: 0.51, alpha: 1),
              limbDark: SKColor(white: 0.12, alpha: 1), webbing: false, emblem: false,
              headgear: .greenHair, fightSpeed: 1.2, archetype: .shooter, costume: .joker),
-        Skin(name: "Mallet-Rival", suit: Palette.red, suitDark: Palette.redDark,
+        Skin(name: "Mallet-Buddy", suit: Palette.red, suitDark: Palette.redDark,
              limb: SKColor(white: 0.12, alpha: 1), limbDark: SKColor(white: 0.06, alpha: 1),
              webbing: false, emblem: false, headgear: .jester, fightSpeed: 1.25, costume: .harley),
-        Skin(name: "Brute-Rival", suit: SKColor(srgbRed: 0.55, green: 0.4, blue: 0.28, alpha: 1),
+        Skin(name: "Brute-Buddy", suit: SKColor(srgbRed: 0.55, green: 0.4, blue: 0.28, alpha: 1),
              suitDark: SKColor(srgbRed: 0.33, green: 0.23, blue: 0.16, alpha: 1),
              limb: SKColor(white: 0.15, alpha: 1), limbDark: SKColor(white: 0.08, alpha: 1),
              webbing: false, emblem: false, headgear: .respirator,
              bodyScale: 1.35, fightSpeed: 0.95, archetype: .charger, costume: .bane),
-        Skin(name: "Frost-Rival", suit: SKColor(srgbRed: 0.18, green: 0.48, blue: 0.72, alpha: 1),
+        Skin(name: "Frost-Buddy", suit: SKColor(srgbRed: 0.18, green: 0.48, blue: 0.72, alpha: 1),
              suitDark: SKColor(srgbRed: 0.09, green: 0.23, blue: 0.4, alpha: 1),
              limb: SKColor(srgbRed: 0.38, green: 0.63, blue: 0.8, alpha: 1),
              limbDark: SKColor(srgbRed: 0.18, green: 0.34, blue: 0.5, alpha: 1),
@@ -131,7 +131,7 @@ struct Skin {
     // MARK: The rogues gallery
 
     static let villains: [Skin] = [
-        Skin(name: "Goblin-Rival",
+        Skin(name: "Goblin-Buddy",
              suit: SKColor(srgbRed: 0.26, green: 0.62, blue: 0.28, alpha: 1),
              suitDark: SKColor(srgbRed: 0.16, green: 0.42, blue: 0.19, alpha: 1),
              limb: SKColor(srgbRed: 0.40, green: 0.20, blue: 0.58, alpha: 1),
@@ -140,7 +140,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.82, green: 0.74, blue: 0.40, alpha: 1),
              webbing: false, emblem: false, headgear: .hat, archetype: .flyer),
 
-        Skin(name: "Shadow-Rival",
+        Skin(name: "Shadow-Buddy",
              suit: SKColor(srgbRed: 0.09, green: 0.09, blue: 0.12, alpha: 1),
              suitDark: SKColor(srgbRed: 0.05, green: 0.05, blue: 0.07, alpha: 1),
              limb: SKColor(srgbRed: 0.13, green: 0.13, blue: 0.18, alpha: 1),
@@ -149,7 +149,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.85, green: 0.88, blue: 0.95, alpha: 1),
              webbing: false, emblem: false, eyeScale: 1.45, archetype: .charger),
 
-        Skin(name: "Tentacle-Rival",
+        Skin(name: "Tentacle-Buddy",
              suit: SKColor(srgbRed: 0.34, green: 0.52, blue: 0.30, alpha: 1),
              suitDark: SKColor(srgbRed: 0.22, green: 0.36, blue: 0.20, alpha: 1),
              limb: SKColor(srgbRed: 0.72, green: 0.55, blue: 0.16, alpha: 1),
@@ -158,7 +158,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.72, green: 0.78, blue: 0.86, alpha: 1),
              webbing: false, emblem: false, backGear: .tentacles, fightSpeed: 0.9, archetype: .shooter),
 
-        Skin(name: "Armor-Rival",
+        Skin(name: "Armor-Buddy",
              suit: SKColor(srgbRed: 0.56, green: 0.53, blue: 0.50, alpha: 1),
              suitDark: SKColor(srgbRed: 0.40, green: 0.38, blue: 0.36, alpha: 1),
              limb: SKColor(srgbRed: 0.45, green: 0.42, blue: 0.40, alpha: 1),
@@ -168,7 +168,7 @@ struct Skin {
              webbing: false, emblem: false, headgear: .horns,
              bodyScale: 1.16, fightSpeed: 1.15, archetype: .charger),
 
-        Skin(name: "Sand-Rival",
+        Skin(name: "Sand-Buddy",
              suit: SKColor(srgbRed: 0.74, green: 0.62, blue: 0.36, alpha: 1),
              suitDark: SKColor(srgbRed: 0.56, green: 0.46, blue: 0.26, alpha: 1),
              limb: SKColor(srgbRed: 0.64, green: 0.53, blue: 0.30, alpha: 1),
@@ -177,7 +177,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.24, green: 0.18, blue: 0.08, alpha: 1),
              webbing: false, emblem: false, eyeScale: 0.85),
 
-        Skin(name: "Mirage-Rival",
+        Skin(name: "Mirage-Buddy",
              suit: SKColor(srgbRed: 0.20, green: 0.55, blue: 0.34, alpha: 1),
              suitDark: SKColor(srgbRed: 0.13, green: 0.37, blue: 0.22, alpha: 1),
              limb: SKColor(srgbRed: 0.85, green: 0.78, blue: 0.25, alpha: 1),
@@ -186,7 +186,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.70, green: 0.76, blue: 0.86, alpha: 1),
              webbing: false, emblem: false, headgear: .bowl),
 
-        Skin(name: "Spark-Rival",
+        Skin(name: "Spark-Buddy",
              suit: SKColor(srgbRed: 0.18, green: 0.62, blue: 0.46, alpha: 1),
              suitDark: SKColor(srgbRed: 0.11, green: 0.42, blue: 0.31, alpha: 1),
              limb: SKColor(srgbRed: 0.93, green: 0.86, blue: 0.20, alpha: 1),
@@ -195,7 +195,7 @@ struct Skin {
              eyeFar: SKColor(srgbRed: 0.82, green: 0.84, blue: 0.62, alpha: 1),
              webbing: false, emblem: false, headgear: .crest, fightSpeed: 1.05, archetype: .shooter),
 
-        Skin(name: "Wing-Rival",
+        Skin(name: "Wing-Buddy",
              suit: SKColor(srgbRed: 0.36, green: 0.48, blue: 0.30, alpha: 1),
              suitDark: SKColor(srgbRed: 0.24, green: 0.34, blue: 0.20, alpha: 1),
              limb: SKColor(srgbRed: 0.30, green: 0.30, blue: 0.28, alpha: 1),
@@ -205,7 +205,7 @@ struct Skin {
              webbing: false, emblem: false, headgear: .beak,
              backGear: .wings, fightSpeed: 1.1, archetype: .flyer),
 
-        Skin(name: "Hunter-Rival",
+        Skin(name: "Hunter-Buddy",
              suit: SKColor(srgbRed: 0.72, green: 0.52, blue: 0.26, alpha: 1),
              suitDark: SKColor(srgbRed: 0.52, green: 0.37, blue: 0.18, alpha: 1),
              limb: SKColor(srgbRed: 0.42, green: 0.30, blue: 0.16, alpha: 1),
@@ -215,7 +215,7 @@ struct Skin {
              webbing: false, emblem: false, headgear: .mane,
              bodyScale: 1.05, fightSpeed: 1.2, archetype: .brawler),
 
-        Skin(name: "Boss-Rival",
+        Skin(name: "Boss-Buddy",
              suit: SKColor(srgbRed: 0.92, green: 0.92, blue: 0.94, alpha: 1),
              suitDark: SKColor(srgbRed: 0.70, green: 0.70, blue: 0.74, alpha: 1),
              limb: SKColor(srgbRed: 0.22, green: 0.16, blue: 0.32, alpha: 1),
@@ -227,17 +227,17 @@ struct Skin {
     ]
 
     static let deadpoolVillains: [Skin] = [
-        Skin(name: "Blade-Rival", suit: SKColor(white: 0.65, alpha: 1),
+        Skin(name: "Blade-Buddy", suit: SKColor(white: 0.65, alpha: 1),
              suitDark: SKColor(white: 0.4, alpha: 1),
              limb: SKColor(white: 0.22, alpha: 1), limbDark: SKColor(white: 0.12, alpha: 1),
              webbing: false, emblem: false, backGear: .swords, fightSpeed: 1.15),
-        Skin(name: "Tank-Rival", suit: SKColor(srgbRed: 0.48, green: 0.25, blue: 0.14, alpha: 1),
+        Skin(name: "Tank-Buddy", suit: SKColor(srgbRed: 0.48, green: 0.25, blue: 0.14, alpha: 1),
              suitDark: SKColor(srgbRed: 0.3, green: 0.13, blue: 0.07, alpha: 1),
              limb: SKColor(srgbRed: 0.67, green: 0.45, blue: 0.29, alpha: 1),
              limbDark: SKColor(srgbRed: 0.43, green: 0.27, blue: 0.16, alpha: 1),
              webbing: false, emblem: false, headgear: .helmet,
              bodyScale: 1.35, fightSpeed: 0.9, archetype: .charger),
-        Skin(name: "Copycat-Rival", suit: SKColor(white: 0.88, alpha: 1),
+        Skin(name: "Copycat-Buddy", suit: SKColor(white: 0.88, alpha: 1),
              suitDark: SKColor(white: 0.6, alpha: 1),
              limb: SKColor(srgbRed: 0.13, green: 0.22, blue: 0.39, alpha: 1),
              limbDark: SKColor(srgbRed: 0.08, green: 0.13, blue: 0.25, alpha: 1),
@@ -246,7 +246,7 @@ struct Skin {
              fightSpeed: 1.1, archetype: .shooter),
         { () -> Skin in
             var skin = Skin.deadpool
-            skin.name = "Mirror-Rival"
+            skin.name = "Mirror-Buddy"
             skin.suitDark = SKColor(srgbRed: 0.23, green: 0.04, blue: 0.05, alpha: 1)
             skin.eyeFar = SKColor(srgbRed: 1, green: 0.67, blue: 0.2, alpha: 1)
             skin.fightSpeed = 1.2
