@@ -2,6 +2,17 @@
 
 A tiny superhero who lives on your Mac desktop.
 
+## Watch the demo
+
+[![Bat-Buddy's beacon and Spider-Buddy in action](docs/launch/demo-preview.gif)](https://github.com/souvickcse/SuperBuddy/releases/download/v1.1.1/SuperBuddy-demo.mp4)
+
+[Watch or download the full demo — Bat-Buddy and Spider-Buddy (1:58, MP4)](https://github.com/souvickcse/SuperBuddy/releases/download/v1.1.1/SuperBuddy-demo.mp4).
+Recorded from the running Mac app: Buddy-Mobile rides, Bat-Beacon, wall crawling
+and web swings. The preview above shows two short excerpts; the full recording
+is available from the linked release asset.
+
+## Choose your buddy
+
 Use **Choose Buddy → Spider-Buddy / Pool-Buddy / Bat-Buddy / Smash-Buddy** in the shield menu to switch characters.
 Your choice is remembered between launches. Pool-Buddy faces Blade-Baddie, Tank-Baddie,
 Copycat-Baddie and Mirror-Baddie; automatic fights and **Summon a villain!** both use
