@@ -242,7 +242,11 @@ opponents after `make check`.
 
 ## Bat-Signal and bat camouflage
 
-With Batman selected, use **Bat-Signal** (⌘E). A golden spotlight
+With Batman selected, the **Bat-Signal** appears automatically at random intervals
+alongside his other actions. Its cooldown counts 20–45 seconds of normal patrol or
+idle time; it waits during pauses, fights, gliding and Batmobile rides. Automatic
+Batmobile rides also wait for the bat swarm to finish. Use **Bat-Signal** (⌘E) to
+trigger it manually at any time when Batman is available. A golden spotlight
 projects the bat emblem into the sky; 42 animated bats fly in, swirl around Batman,
 conceal him for two seconds, then scatter as he reappears. The swarm follows him
 as he moves. This is a visual camouflage effect, not an invulnerability power.

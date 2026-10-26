@@ -15,6 +15,7 @@ final class BatSignal {
     private let bats: [SKShapeNode] = (0..<42).map { _ in SKShapeNode(path: Rig.batShape()) }
     private var sky = CGPoint.zero
     private var lamp = CGPoint.zero
+    private var automaticIn: TimeInterval = Double(randf(20, 45))
     var active: Bool { phase != .idle }
 
     init() {
@@ -48,6 +49,7 @@ final class BatSignal {
         sky = CGPoint(x: clampf(buddy.pos.x + 130, world.leftX + 80, world.rightX - 80),
                       y: world.floorY + world.height * 0.73)
         lamp = CGPoint(x: world.clampX(buddy.pos.x - 75), y: world.floorY + 8)
+        automaticIn = Double(randf(20, 45))
         elapsed = 0; phase = .signaling
         root.isHidden = false
         scene.addChild(root)
@@ -57,12 +59,22 @@ final class BatSignal {
 
     func cancel(buddy: Buddy) {
         buddy.rig.root.alpha = 1
+        automaticIn = Double(randf(20, 45))
         elapsed = 0; phase = .idle
         root.removeFromParent()
     }
 
-    func update(dt: TimeInterval, world: World, buddy: Buddy) {
-        guard active else { return }
+    func update(dt: TimeInterval, world: World, buddy: Buddy,
+                scene: SKScene? = nil, automatic: Bool = false) {
+        if !active {
+            // Count only normal patrol/idle time, so other actions get to finish.
+            guard automatic, let scene, buddy.character == .batman, !buddy.paused,
+                  !buddy.inBattle, !buddy.inVehicle, buddy.grounded,
+                  [.stand, .walk, .run].contains(buddy.currentState) else { return }
+            automaticIn -= Swift.max(0, dt)
+            if automaticIn <= 0 { _ = start(world: world, scene: scene, buddy: buddy) }
+            return
+        }
         guard buddy.character == .batman, !buddy.inVehicle, buddy.currentState != .grabbed else {
             cancel(buddy: buddy); return
         }

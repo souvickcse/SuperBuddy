@@ -49,9 +49,9 @@ final class BuddyScene: SKScene {
         if dt < 0 { dt = 0 }
         if dt > 0.05 { dt = 0.05 }
         buddy.cursor = cursorInScene()
-        batmobile.update(dt: dt, world: world, scene: self, buddy: buddy)
+        batmobile.update(dt: dt, world: world, scene: self, buddy: buddy, automatic: !batSignal.active)
         buddy.update(dt: dt, world: world, scene: self, web: web)
-        batSignal.update(dt: dt, world: world, buddy: buddy)
+        batSignal.update(dt: dt, world: world, buddy: buddy, scene: self, automatic: !batmobile.active)
         if !frozen { battle.update(dt: dt, world: world, scene: self, buddy: buddy) }
     }
 

@@ -375,6 +375,28 @@ struct SimCheck {
             if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal started while paused") }
             buddy.paused = false
             print("Bat-Signal           : conceal/reveal, pause, duplicate prevention, switch/drag/boarding cleanup passed")
+            // Automatic signals wait through pause/combat, start during a patrol,
+            // and respect their cooldown after revealing Batman.
+            buddy.place(world)
+            let automaticSignal = BatSignal()
+            buddy.paused = true
+            for _ in 0..<3600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
+            if automaticSignal.active { failures.append("Automatic Bat-Signal started while paused") }
+            buddy.paused = false; buddy.inBattle = true
+            for _ in 0..<3600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
+            if automaticSignal.active { failures.append("Automatic Bat-Signal started during combat") }
+            buddy.inBattle = false
+            var automaticStarted = false
+            for _ in 0..<2800 {
+                automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true)
+                if automaticSignal.active { automaticStarted = true; break }
+            }
+            if !automaticStarted { failures.append("Bat-Signal never started automatically during patrol") }
+            for _ in 0..<420 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
+            for _ in 0..<600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
+            if automaticSignal.active || buddy.rig.root.alpha != 1 { failures.append("Automatic Bat-Signal ignored cooldown or failed to reveal Batman") }
+            automaticSignal.cancel(buddy: buddy)
+            print("Automatic Bat-Signal : patrol activation, pause/combat guards and cooldown passed")
             // Grapple should draw a cable, release it, and transition into a glide.
             buddy.place(world)
             buddy.webZip(world, scene, toCeiling: true)
