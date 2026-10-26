@@ -149,7 +149,7 @@ struct SimCheck {
         }
         if swings < 3 { failures.append("barely used webs (\(swings) swings)") }
         }
-        if buddy.character == .batman && swings > 0 { failures.append("Batman used web swinging") }
+        if buddy.character == .batman && swings > 0 { failures.append("Bat-Buddy used web swinging") }
         if landings < 3 { failures.append("barely landed like a hero (\(landings))") }
         if minY < -1 { failures.append("fell below the floor") }
         if maxSpeed > 4000 { failures.append("unstable velocity") }
@@ -164,8 +164,8 @@ struct SimCheck {
         if uprightOnWall > 0 { failures.append("stood upright on a wall for \(uprightOnWall) frames") }
         if crawlFrames < 300 { failures.append("hardly ever crawled on a wall (\(crawlFrames) frames)") }
         } else if buddy.character == .deadpool || buddy.character == .hulk {
-            if swings != 0 || zips != 0 || upsideDownFrames != 0 { failures.append("Deadpool used Spider-Man traversal") }
-            if surfacesSeen != ["floor"] { failures.append("Deadpool clung to a wall or ceiling") }
+            if swings != 0 || zips != 0 || upsideDownFrames != 0 { failures.append("Pool-Buddy used Spider-Buddy traversal") }
+            if surfacesSeen != ["floor"] { failures.append("Pool-Buddy clung to a wall or ceiling") }
         }
         if blinks < 20 { failures.append("only \(blinks) blinks in 5 minutes") }
         if blinks > 400 { failures.append("blinking far too often (\(blinks))") }
@@ -204,14 +204,14 @@ struct SimCheck {
         buddy.place(world)
         buddy.swing(world, scene)
         if buddy.character == .spider && buddy.currentState != .swing { failures.append("menu swing command failed") }
-        if buddy.character != .spider && buddy.currentState == .swing { failures.append("Deadpool accepted a swing command") }
+        if buddy.character != .spider && buddy.currentState == .swing { failures.append("Pool-Buddy accepted a swing command") }
         if buddy.character == .deadpool || buddy.character == .hulk {
             buddy.webZip(world, scene)
             buddy.hangFromWeb(world, scene)
             buddy.hangUpsideDown(world, scene)
             buddy.webBlast(at: .zero, scene: scene)
             buddy.update(dt: dt, world: world, scene: scene, web: web)
-            if web.phase != .idle { failures.append("Deadpool drew a web") }
+            if web.phase != .idle { failures.append("Pool-Buddy drew a web") }
         }
         for _ in 0..<300 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
         buddy.jump(world)
@@ -221,18 +221,18 @@ struct SimCheck {
 
         if buddy.character == .hulk {
             buddy.place(world)
-            if abs(buddy.rig.scale - buddy.scale * 1.25) > 0.001 { failures.append("Hulk size multiplier missing") }
+            if abs(buddy.rig.scale - buddy.scale * 1.25) > 0.001 { failures.append("Smash-Buddy size multiplier missing") }
             buddy.thunderclap(scene)
-            if buddy.currentState != .thunderclap { failures.append("Hulk thunderclap command failed") }
+            if buddy.currentState != .thunderclap { failures.append("Smash-Buddy thunderclap command failed") }
             for _ in 0..<120 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
             buddy.punchAt(buddy.pos + CGPoint(x: 100, y: 0), scene: scene)
-            if buddy.currentState != .punch { failures.append("Hulk smash command failed") }
+            if buddy.currentState != .punch { failures.append("Smash-Buddy smash command failed") }
             for _ in 0..<120 { buddy.update(dt: dt, world: world, scene: scene, web: web) }
-            if !buddy.hitTest(buddy.pos + CGPoint(x: 23 * buddy.rig.scale, y: 0)) { failures.append("Hulk broad hit area missing") }
+            if !buddy.hitTest(buddy.pos + CGPoint(x: 23 * buddy.rig.scale, y: 0)) { failures.append("Smash-Buddy broad hit area missing") }
             buddy.setScale(1.35)
             world.reach = buddy.reach
             buddy.place(world)
-            if abs(buddy.pos.y - world.floorY - buddy.reach) > 0.01 { failures.append("Hulk large scale floor alignment failed") }
+            if abs(buddy.pos.y - world.floorY - buddy.reach) > 0.01 { failures.append("Smash-Buddy large scale floor alignment failed") }
             buddy.setScale(0.9)
             world.reach = buddy.reach
         }
@@ -325,31 +325,31 @@ struct SimCheck {
             // The signal must conceal/reveal Batman and restore opacity on every interruption.
             buddy.place(world)
             let signal = BatSignal()
-            if !signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal did not start") }
-            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal allowed duplicate swarms") }
+            if !signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Beacon did not start") }
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Beacon allowed duplicate swarms") }
             var concealed = false
             for _ in 0..<180 {
                 buddy.update(dt: dt, world: world, scene: scene, web: web)
                 signal.update(dt: dt, world: world, buddy: buddy)
                 concealed = concealed || buddy.rig.root.alpha < 0.1
             }
-            if !concealed || signal.phase != .camouflaged { failures.append("Bat swarm did not camouflage Batman") }
+            if !concealed || signal.phase != .camouflaged { failures.append("Bat swarm did not camouflage Bat-Buddy") }
             buddy.paused = true
             let signalTime = signal.elapsed
             let hiddenAlpha = buddy.rig.root.alpha
             for _ in 0..<120 { signal.update(dt: dt, world: world, buddy: buddy) }
-            if signal.elapsed != signalTime || buddy.rig.root.alpha != hiddenAlpha { failures.append("Bat-Signal advanced while paused") }
+            if signal.elapsed != signalTime || buddy.rig.root.alpha != hiddenAlpha { failures.append("Bat-Beacon advanced while paused") }
             buddy.paused = false
             for _ in 0..<300 { signal.update(dt: dt, world: world, buddy: buddy) }
-            if signal.active || signal.root.parent != nil || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal did not reveal/clean up") }
+            if signal.active || signal.root.parent != nil || buddy.rig.root.alpha != 1 { failures.append("Bat-Beacon did not reveal/clean up") }
             for replacement in [BuddyCharacter.spider, .deadpool, .hulk] {
                 buddy.place(world)
                 _ = signal.start(world: world, scene: scene, buddy: buddy)
                 signal.update(dt: 3, world: world, buddy: buddy)
                 buddy.selectCharacter(replacement)
                 signal.update(dt: dt, world: world, buddy: buddy)
-                if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal left a switched character hidden") }
-                if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Non-Batman buddy summoned the Bat-Signal") }
+                if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Beacon left a switched character hidden") }
+                if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Non-Bat-Buddy buddy summoned the Bat-Beacon") }
                 buddy.selectCharacter(.batman)
             }
             buddy.place(world)
@@ -358,45 +358,45 @@ struct SimCheck {
             buddy.mouseDown(at: buddy.pos, clickCount: 1, scene: scene)
             buddy.mouseDragged(to: buddy.pos + CGPoint(x: 30, y: 30), time: 1)
             signal.update(dt: dt, world: world, buddy: buddy)
-            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Dragging did not reveal Batman") }
+            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Dragging did not reveal Bat-Buddy") }
             buddy.cancelDrag(); buddy.place(world)
             _ = signal.start(world: world, scene: scene, buddy: buddy)
             signal.update(dt: 3, world: world, buddy: buddy)
             signal.cancel(buddy: buddy)
-            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Signal cancellation did not restore opacity") }
+            if signal.active || buddy.rig.root.alpha != 1 { failures.append("Bat-Beacon cancellation did not restore opacity") }
             _ = signal.start(world: world, scene: scene, buddy: buddy)
             signal.update(dt: 3, world: world, buddy: buddy)
             buddy.vehicleControl(at: buddy.pos, seated: true)
             signal.update(dt: dt, world: world, buddy: buddy)
             if signal.active || buddy.rig.root.alpha != 1 { failures.append("Boarding did not clear camouflage") }
-            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal started in the car") }
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Beacon started in the car") }
             buddy.leaveVehicle(world, at: world.bounds.midX)
             buddy.paused = true
-            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Signal started while paused") }
+            if signal.start(world: world, scene: scene, buddy: buddy) { failures.append("Bat-Beacon started while paused") }
             buddy.paused = false
-            print("Bat-Signal           : conceal/reveal, pause, duplicate prevention, switch/drag/boarding cleanup passed")
+            print("Bat-Beacon           : conceal/reveal, pause, duplicate prevention, switch/drag/boarding cleanup passed")
             // Automatic signals wait through pause/combat, start during a patrol,
             // and respect their cooldown after revealing Batman.
             buddy.place(world)
             let automaticSignal = BatSignal()
             buddy.paused = true
             for _ in 0..<3600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
-            if automaticSignal.active { failures.append("Automatic Bat-Signal started while paused") }
+            if automaticSignal.active { failures.append("Automatic Bat-Beacon started while paused") }
             buddy.paused = false; buddy.inBattle = true
             for _ in 0..<3600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
-            if automaticSignal.active { failures.append("Automatic Bat-Signal started during combat") }
+            if automaticSignal.active { failures.append("Automatic Bat-Beacon started during combat") }
             buddy.inBattle = false
             var automaticStarted = false
             for _ in 0..<2800 {
                 automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true)
                 if automaticSignal.active { automaticStarted = true; break }
             }
-            if !automaticStarted { failures.append("Bat-Signal never started automatically during patrol") }
+            if !automaticStarted { failures.append("Bat-Beacon never started automatically during patrol") }
             for _ in 0..<420 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
             for _ in 0..<600 { automaticSignal.update(dt: dt, world: world, buddy: buddy, scene: scene, automatic: true) }
-            if automaticSignal.active || buddy.rig.root.alpha != 1 { failures.append("Automatic Bat-Signal ignored cooldown or failed to reveal Batman") }
+            if automaticSignal.active || buddy.rig.root.alpha != 1 { failures.append("Automatic Bat-Beacon ignored cooldown or failed to reveal Bat-Buddy") }
             automaticSignal.cancel(buddy: buddy)
-            print("Automatic Bat-Signal : patrol activation, pause/combat guards and cooldown passed")
+            print("Automatic Bat-Beacon : patrol activation, pause/combat guards and cooldown passed")
             // Grapple should draw a cable, release it, and transition into a glide.
             buddy.place(world)
             buddy.webZip(world, scene, toCeiling: true)
@@ -406,11 +406,11 @@ struct SimCheck {
                 sawCable = sawCable || web.phase != .idle
                 sawGlide = sawGlide || buddy.currentState == .glide
             }
-            if !sawCable || !sawGlide { failures.append("Batman grapple/glide sequence failed") }
+            if !sawCable || !sawGlide { failures.append("Bat-Buddy grapple/glide sequence failed") }
             // A vehicle trip must board, drive, return the buddy, and remove the car.
             buddy.place(world)
             let car = Batmobile()
-            if !car.summon(world: world, scene: scene, buddy: buddy, drive: true) { failures.append("Batmobile summon failed") }
+            if !car.summon(world: world, scene: scene, buddy: buddy, drive: true) { failures.append("Buddy-Mobile summon failed") }
             var boarded = false, drove = false
             var climbs: Set<String> = []
             var maxDriveSpeed: CGFloat = 0
@@ -427,11 +427,11 @@ struct SimCheck {
                     if delta.y > 1, abs(cos(car.root.zRotation)) < 0.01 {
                         climbs.insert("\(car.drivingSurface)")
                     }
-                    if !world.bounds.contains(car.root.position) { failures.append("Batmobile escaped the display while wall driving"); break }
+                    if !world.bounds.contains(car.root.position) { failures.append("Buddy-Mobile escaped the display while wall driving"); break }
                 }
                 if car.phase == .exiting {
                     if abs(car.root.zRotation) > 0.001 || abs(car.root.position.y - world.floorY - 2 * buddy.scale) > 0.01 {
-                        failures.append("Batman tried to exit away from the floor")
+                        failures.append("Bat-Buddy tried to exit away from the floor")
                     }
                 }
                 wasDriving = car.phase == .driving
@@ -439,10 +439,10 @@ struct SimCheck {
                 if !car.active { break }
             }
             if !boarded || !drove || car.active || buddy.inVehicle || buddy.rig.root.isHidden {
-                failures.append("Batmobile trip did not board/drive/exit/clean up")
+                failures.append("Buddy-Mobile trip did not board/drive/exit/clean up")
             }
-            if !climbs.contains("left") || !climbs.contains("right") { failures.append("Batmobile did not climb both side walls") }
-            if maxDriveSpeed < 1000 { failures.append("Batmobile did not reach boost speed") }
+            if !climbs.contains("left") || !climbs.contains("right") { failures.append("Buddy-Mobile did not climb both side walls") }
+            if maxDriveSpeed < 1000 { failures.append("Buddy-Mobile did not reach boost speed") }
             // Pause on a wall must freeze position and rotation; dismiss returns to the floor.
             buddy.place(world)
             _ = car.summon(world: world, scene: scene, buddy: buddy, drive: true)
@@ -453,23 +453,23 @@ struct SimCheck {
                     pausedOnWall = true; break
                 }
             }
-            if !pausedOnWall { failures.append("Batmobile did not reach a wall for pause test") }
+            if !pausedOnWall { failures.append("Buddy-Mobile did not reach a wall for pause test") }
             buddy.paused = true
             let parkedAt = car.root.position
             let parkedAngle = car.root.zRotation
             for _ in 0..<120 { car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false) }
-            if car.root.position != parkedAt || car.root.zRotation != parkedAngle { failures.append("Batmobile moved or rotated while paused") }
+            if car.root.position != parkedAt || car.root.zRotation != parkedAngle { failures.append("Buddy-Mobile moved or rotated while paused") }
             buddy.paused = false
             car.dismiss(world: world, buddy: buddy)
-            if !buddy.inVehicle { failures.append("Batman was ejected in mid-climb") }
+            if !buddy.inVehicle { failures.append("Bat-Buddy was ejected in mid-climb") }
             for _ in 0..<2400 {
                 car.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
                 if !car.active { break }
             }
-            if car.active || buddy.inVehicle || buddy.rig.root.isHidden { failures.append("Wall-ride dismissal did not restore Batman") }
+            if car.active || buddy.inVehicle || buddy.rig.root.isHidden { failures.append("Wall-ride dismissal did not restore Bat-Buddy") }
             car.cancel(world: world, buddy: buddy)
-            if buddy.inVehicle || buddy.rig.root.isHidden || car.root.parent != nil { failures.append("Batmobile cancel left hidden buddy or car") }
-            print("Batmobile            : boarded=\(boarded), climbs=\(climbs.sorted()), speed=\(Int(maxDriveSpeed))pt/s, cleaned up=\(!car.active)")
+            if buddy.inVehicle || buddy.rig.root.isHidden || car.root.parent != nil { failures.append("Buddy-Mobile cancel left hidden buddy or car") }
+            print("Buddy-Mobile            : boarded=\(boarded), climbs=\(climbs.sorted()), speed=\(Int(maxDriveSpeed))pt/s, cleaned up=\(!car.active)")
             // Different scales, portrait geometry and coarse frames must still finish a trip.
             for (testSize, testScale, testDT) in [(CGSize(width: 900, height: 1440), CGFloat(1.35), 1.0 / 30.0),
                                                   (CGSize(width: 800, height: 600), CGFloat(0.62), 0.05)] {
@@ -486,7 +486,7 @@ struct SimCheck {
                     if vehicle.phase == .driving {
                         visitedLeft = visitedLeft || vehicle.drivingSurface == .left
                         visitedRight = visitedRight || vehicle.drivingSurface == .right
-                        if !testWorld.bounds.contains(vehicle.root.position) { failures.append("Scaled Batmobile left screen"); break }
+                        if !testWorld.bounds.contains(vehicle.root.position) { failures.append("Scaled Buddy-Mobile left screen"); break }
                     }
                     if !vehicle.active { break }
                 }

@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="SuperBuddy"
-VERSION="1.0"
+VERSION="1.1"
 DIST="dist"
 APP="build/Build/Products/Release/${APP_NAME}.app"
 
@@ -61,17 +61,17 @@ FIRST LAUNCH
 
 
 WHAT IT IS
-  Four selectable desktop companions: Spider-Man, Deadpool, Batman and Hulk.
+  Four selectable desktop companions: Spider-Buddy, Pool-Buddy, Bat-Buddy and Smash-Buddy.
   Use the shield icon in the menu bar to choose a buddy and trigger actions.
 
-  * Spider-Man: web swinging, wall crawling, jumps and superhero landings.
-  * Deadpool: katana sequences, pistol actions, swagger and dancing.
-  * Batman: Batarangs, grappling, gliding, Bat-Signal bat camouflage, and a
-    Batmobile that drives and climbs the side walls at high speed.
-  * Hulk: heavy movement, super leaps, smashes, thunderclaps and roaring.
+  * Spider-Buddy: web swinging, wall crawling, jumps and superhero landings.
+  * Pool-Buddy: katana sequences, pistol actions, swagger and dancing.
+  * Bat-Buddy: Wingblades, grappling, gliding, Bat-Beacon bat camouflage, and a
+    Buddy-Mobile that drives and climbs the side walls at high speed.
+  * Smash-Buddy: heavy movement, super leaps, smashes, thunderclaps and roaring.
   * Each buddy has its own villain roster.
   * Click or drag your buddy, select size/display, pause, reset or quit from
-    the menu bar. The Batmobile command starts a ride or brings it back.
+    the menu bar. The Buddy-Mobile command starts a ride or brings it back.
 
   The overlay passes clicks through to other apps except over the buddy.
 

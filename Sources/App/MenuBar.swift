@@ -33,14 +33,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         menu.addItem(make("Jump", .jump, "j"))
         menu.addItem(make("Katana slash", .katana, "k"))
         menu.addItem(make("Fire pistol", .pistol, "f"))
-        menu.addItem(make("Hulk smash!", .smash, "k"))
+        menu.addItem(make("Smash-Buddy smash!", .smash, "k"))
         menu.addItem(make("Thunderclap", .clap, "t"))
-        menu.addItem(make("Bat-Signal", .batSignal, "e"))
-        menu.addItem(make("Throw Batarang", .batarang, "b"))
+        menu.addItem(make("Bat-Beacon", .batSignal, "e"))
+        menu.addItem(make("Throw Wingblade", .batarang, "b"))
         menu.addItem(make("Combat combo", .combo, "k"))
         menu.addItem(make("Grapple", .grapple, "g"))
         menu.addItem(make("Glide", .glide, "l"))
-        menu.addItem(make("Batmobile", .batmobile, "m"))
+        menu.addItem(make("Buddy-Mobile", .batmobile, "m"))
         menu.addItem(make("Shoot a web & swing", .swing, "s"))
         menu.addItem(make("Go hang from the ceiling", .hang, "h"))
         menu.addItem(make("Web-zip to the ceiling", .zipUp, "u"))
@@ -103,7 +103,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             }
             if [Tag.smash, .clap].map({ $0.rawValue }).contains(item.tag) { item.isHidden = !isHulk }
             if item.tag == Tag.jump.rawValue { item.title = isHulk ? "Super leap" : "Jump" }
-            if item.tag == Tag.dance.rawValue { item.title = isHulk ? "Roar & flex" : (isBatman ? "Scan & flip Batarang" : "Dance!") }
+            if item.tag == Tag.dance.rawValue { item.title = isHulk ? "Roar & flex" : (isBatman ? "Scan & flip Wingblade" : "Dance!") }
             if [Tag.katana, .pistol].map({ $0.rawValue }).contains(item.tag) {
                 item.isHidden = !isDeadpool
             }

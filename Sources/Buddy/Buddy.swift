@@ -732,8 +732,8 @@ final class Buddy {
         forceHeroLand = false
         enter(.dance)
         blinkNow()
-        if character == .hulk { FX.text("HULK STRONGEST!", at: pos + CGPoint(x: 0, y: reach + 20), in: scene) }
-        else if character == .batman { FX.text("GOTHAM IS SAFE.", at: pos + CGPoint(x: 0, y: reach + 12), in: scene) }
+        if character == .hulk { FX.text("SMASH-BUDDY STRONGEST!", at: pos + CGPoint(x: 0, y: reach + 20), in: scene) }
+        else if character == .batman { FX.text("THE DESKTOP IS SAFE.", at: pos + CGPoint(x: 0, y: reach + 12), in: scene) }
         else { FX.notes(at: pos + CGPoint(x: 0, y: reach + 8), in: scene, count: 5) }
         FX.hitSpark(at: pos, in: scene)
     }

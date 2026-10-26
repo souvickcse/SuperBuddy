@@ -2,12 +2,12 @@
 
 A tiny superhero who lives on your Mac desktop.
 
-Use **Choose Buddy → Spider-Man / Deadpool / Batman / Hulk** in the shield menu to switch characters.
-Your choice is remembered between launches. Deadpool faces Ajax, Juggernaut,
-Taskmaster and Evil Deadpool; automatic fights and **Summon a villain!** both use
-the selected buddy’s enemy roster. Deadpool wears his red-and-black mask,
+Use **Choose Buddy → Spider-Buddy / Pool-Buddy / Bat-Buddy / Smash-Buddy** in the shield menu to switch characters.
+Your choice is remembered between launches. Pool-Buddy faces Blade-Rival, Tank-Rival,
+Copycat-Rival and Mirror-Rival; automatic fights and **Summon a villain!** both use
+the selected buddy’s enemy roster. Pool-Buddy wears his red-and-black mask,
 utility belt and twin katana scabbards, with a swaggering walk, cheeky idle pose and
-his own goofy dance. Deadpool stays on the floor, does somersault jumps and knee-rub landings, and fights
+his own goofy dance. Pool-Buddy stays on the floor, does somersault jumps and knee-rub landings, and fights
 with a drawn katana up close or cartoon pistol shots at range. He does not shoot webs,
 swing, cling to walls or hang from the ceiling; those menu commands are hidden for him. Use **Katana slash** or **Fire pistol**
 in the menu to trigger his weapon animations while he is standing on the floor.
@@ -103,9 +103,9 @@ make clean      # remove build artefacts
 `make dist` produces a **universal** (Apple Silicon **and** Intel) Release build and
 wraps it two ways in `dist/`:
 
-* `SuperBuddy-1.0-universal.dmg` — open it, drag the app onto the Applications
+* `SuperBuddy-1.1-universal.dmg` — open it, drag the app onto the Applications
   shortcut. Friendliest for other people.
-* `SuperBuddy-1.0-universal-macOS.zip` — the same app, zipped.
+* `SuperBuddy-1.1-universal-macOS.zip` — the same app, zipped.
 
 Both include a **How to open Super Buddy.txt** explaining the one thing that always
 trips people up: the app is **ad-hoc signed, not notarised**, because that needs a paid
@@ -167,14 +167,14 @@ Ten villains, and they do not all fight the same way:
 
 | Archetype | Who | How they fight |
 |---|---|---|
-| `brawler` | Sandman, Kraven | walks in and trades punches |
-| `charger` | Rhino, Venom, Kingpin | backs off, winds up, then barrels in at speed |
-| `flyer` | Green Goblin, Vulture | hovers overhead and dives on him (wings on the Vulture) |
-| `shooter` | Doctor Octopus, Electro, Mysterio | keeps its distance and fires bolts |
+| `brawler` | Sand-Rival, Hunter-Rival | walks in and trades punches |
+| `charger` | Armor-Rival, Shadow-Rival, Boss-Rival | backs off, winds up, then barrels in at speed |
+| `flyer` | Goblin-Rival, Wing-Rival | hovers overhead and dives on him (wings on the Wing-Rival) |
+| `shooter` | Tentacle-Rival, Spark-Rival, Mirage-Rival | keeps its distance and fires bolts |
 
 They are all the *same rig* wearing a different `Skin` — colours, headgear (a bonnet,
-horns, a dome, a crest, a beak, a mane) and back gear (Doc Ock's four mechanical arms,
-the Vulture's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
+horns, a dome, a crest, a beak, a mane) and back gear (Tentacle-Rival's four mechanical arms,
+the Wing-Rival's wings) come from one struct in `Sources/Buddy/Skin.swift`, and the
 archetype decides the fight. A new villain is about ten lines of colour choices.
 
 A `Battle` director (`Sources/Scene/Battle.swift`) picks one at random, drops him in
@@ -201,55 +201,55 @@ idea gives wall walking, crawling over the ceiling and walking around corners, w
 still allowing normal projectile jumps and a rope-constraint web swing
 (`|p − anchor| ≤ ropeLength`, with the radial velocity removed each step).
 
-## Batman and the Batmobile
+## Bat-Buddy and the Buddy-Mobile
 
-Select **Batman** in **Choose Buddy**. His cowl, animated scalloped cape, bat emblem
-and utility belt accompany a deliberate patrol walk, Batarang pose, punch/kick combo,
+Select **Bat-Buddy** in **Choose Buddy**. His cowl, animated scalloped cape, bat emblem
+and utility belt accompany a deliberate patrol walk, Wingblade pose, punch/kick combo,
 grappling cable and cape glide. He does not shoot webs or cling upside down.
 
-Batman’s menu adds **Throw Batarang** (⌘B), **Combat combo** (⌘K), **Grapple** (⌘G),
-**Glide** (⌘L), and **Batmobile** (⌘M). The single Batmobile command starts a ride;
-choose it again while the car is active to bring it back and dismiss it. Click him to scan the area and flip a Batarang. He occasionally does
-this during a patrol, or takes an automatic Batmobile ride.
+Bat-Buddy’s menu adds **Throw Wingblade** (⌘B), **Combat combo** (⌘K), **Grapple** (⌘G),
+**Glide** (⌘L), and **Buddy-Mobile** (⌘M). The single Buddy-Mobile command starts a ride;
+choose it again while the car is active to bring it back and dismiss it. Click him to scan the area and flip a Wingblade. He occasionally does
+this during a patrol, or takes an automatic Buddy-Mobile ride.
 
-The compact black, finned Batmobile arrives along the bottom edge, parks, opens its
-canopy while Batman boards, races at 1,100 points per second with rotating wheels/headlights/exhaust/boost,
+The compact black, finned Buddy-Mobile arrives along the bottom edge, parks, opens its
+canopy while Bat-Buddy boards, races at 1,100 points per second with rotating wheels/headlights/exhaust/boost,
 climbs both side walls through rounded corner turns, then returns to the floor so
 he can step out before it leaves. Dismiss during a climb brings the car back to
 its floor parking spot first. Pause freezes the ride. Changing
 character/display/size or resetting safely dismisses it. Fighting waits until he
 has left the car.
 
-His enemies are **Joker** (gag bombs), **Harley Quinn** (bouncing approach and mallet),
-**Bane** (heavy charges), and **Mr. Freeze** (ice bolts). They are stylized procedural
+His enemies are **Jester-Rival** (gag bombs), **Mallet-Rival** (bouncing approach and mallet),
+**Brute-Rival** (heavy charges), and **Frost-Rival** (ice bolts). They are stylized procedural
 interpretations using the existing battle system.
 
 Run `./.build/simcheck --batman` after `make check` to exercise his movement, all four
 villains, grappling/gliding, the full vehicle trip, pause and vehicle cleanup.
 
-## Hulk
+## Smash-Buddy
 
-Choose **Hulk** for a larger, muscular green buddy with purple shorts and oversized
+Choose **Smash-Buddy** for a larger, muscular green buddy with purple shorts and oversized
 fists. He patrols on the floor, takes powerful leaps, lands with a shockwave, and
 occasionally stops walking for a two-handed smash. Click him for a roar and flex.
-His menu provides **Hulk smash!** (⌘K), **Thunderclap** (⌘T), **Super leap** (⌘J),
+His menu provides **Smash-Buddy smash!** (⌘K), **Thunderclap** (⌘T), **Super leap** (⌘J),
 and **Roar & flex** (⌘D). He has no webs, guns, swords, grappling cable or vehicle.
 
-His opponents are **Abomination**, **Red Hulk**, **Leader**, and **Absorbing Man**.
+His opponents are **Mutant-Rival**, **Red-Rival**, **Brain-Rival**, and **Metal-Rival**.
 He closes in for a smash or uses a thunderclap shockwave from a distance.
 `./.build/simcheck --hulk` checks his movement, attacks, size/hit area and all four
 opponents after `make check`.
 
-## Bat-Signal and bat camouflage
+## Bat-Beacon and bat camouflage
 
-With Batman selected, the **Bat-Signal** appears automatically at random intervals
+With Bat-Buddy selected, the **Bat-Beacon** appears automatically at random intervals
 alongside his other actions. Its cooldown counts 20–45 seconds of normal patrol or
-idle time; it waits during pauses, fights, gliding and Batmobile rides. Automatic
-Batmobile rides also wait for the bat swarm to finish. Use **Bat-Signal** (⌘E) to
-trigger it manually at any time when Batman is available. A golden spotlight
-projects the bat emblem into the sky; 42 animated bats fly in, swirl around Batman,
+idle time; it waits during pauses, fights, gliding and Buddy-Mobile rides. Automatic
+Buddy-Mobile rides also wait for the bat swarm to finish. Use **Bat-Beacon** (⌘E) to
+trigger it manually at any time when Bat-Buddy is available. A golden spotlight
+projects the bat emblem into the sky; 42 animated bats fly in, swirl around Bat-Buddy,
 conceal him for two seconds, then scatter as he reappears. The swarm follows him
 as he moves. This is a visual camouflage effect, not an invulnerability power.
 Pause freezes the sequence. Reset, character/size/display changes, dragging or
-boarding the Batmobile safely reveal him and clean up the effect. Repeated clicks
+boarding the Buddy-Mobile safely reveal him and clean up the effect. Repeated clicks
 while it is playing do not create overlapping swarms.
