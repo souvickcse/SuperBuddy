@@ -82,6 +82,48 @@ struct SimCheck {
         return failures
     }
 
+    static func checkLongBatInterval() -> [String] {
+        var failures: [String] = []
+        let scene = SKScene(size: CGSize(width: 1680, height: 1000))
+        let buddy = Buddy(); buddy.selectCharacter(.batman)
+        buddy.setAutomaticActionInterval(200)
+        var world = World(); world.bounds = CGRect(origin: .zero, size: scene.size); world.reach = buddy.reach
+        buddy.place(world); scene.addChild(buddy.rig.root)
+        let web = WebLine(); scene.addChild(web)
+        let beacon = BatSignal(), vehicle = Batmobile(), director = AutomaticActions()
+        let dt = 1.0 / 30.0
+        var actions: [AutomaticActions.BatAction] = []
+        var times: [Double] = []
+        for frame in 0..<54000 {
+            vehicle.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
+            buddy.update(dt: dt, world: world, scene: scene, web: web)
+            beacon.update(dt: dt, world: world, buddy: buddy)
+            let previous = director.lastAction
+            director.update(world: world, scene: scene, buddy: buddy, beacon: beacon, vehicle: vehicle)
+            if director.lastAction != previous, let action = director.lastAction {
+                actions.append(action); times.append(Double(frame + 1) * dt)
+            }
+            if actions.count == 5 { break }
+        }
+        if Set(actions).count != AutomaticActions.BatAction.allCases.count {
+            failures.append("200-second interval starved one or more Bat-Buddy actions: \(actions)")
+        }
+        if let first = times.first, first < 200 - dt { failures.append("An automatic action started before 200 seconds") }
+        for (earlier, later) in zip(times, times.dropFirst()) {
+            if later - earlier < 200 - dt { failures.append("Automatic selector ignored the configured 200-second cooldown") }
+        }
+        beacon.cancel(buddy: buddy); vehicle.cancel(world: world, buddy: buddy)
+        buddy.place(world); buddy.setAutomaticActionInterval(0)
+        let previous = director.lastAction
+        for _ in 0..<900 {
+            buddy.update(dt: dt, world: world, scene: scene, web: web)
+            director.update(world: world, scene: scene, buddy: buddy, beacon: beacon, vehicle: vehicle)
+        }
+        if director.lastAction != previous || beacon.active || vehicle.active { failures.append("Shared selector ignored disabled automatic actions") }
+        print("200s action selection : \(actions.map { String(describing: $0) }.joined(separator: ", "))")
+        return failures
+    }
+
     static func main() {
         let size = CGSize(width: 1680, height: 1000)
         let scene = SKScene(size: size)
@@ -118,6 +160,9 @@ struct SimCheck {
         let dt = 1.0 / 60.0
         let seconds = 600.0   // he rests about half the time now, so sample longer
         var ticks = 0
+        let patrolDirector = AutomaticActions()
+        let patrolBeacon = BatSignal()
+        let patrolVehicle = Batmobile()
 
         var stateFrames: [String: Int] = [:]
         var surfacesSeen: Set<String> = []
@@ -144,7 +189,10 @@ struct SimCheck {
         while ticks < Int(seconds / dt) {
             buddy.cursor = CGPoint(x: size.width * 0.5 + sin(Double(ticks) / 300) * 400,
                                    y: size.height * 0.5 + cos(Double(ticks) / 220) * 300)
+            patrolVehicle.update(dt: dt, world: world, scene: scene, buddy: buddy, automatic: false)
             buddy.update(dt: dt, world: world, scene: scene, web: web)
+            patrolBeacon.update(dt: dt, world: world, buddy: buddy)
+            patrolDirector.update(world: world, scene: scene, buddy: buddy, beacon: patrolBeacon, vehicle: patrolVehicle)
             if buddy.character == .deadpool || buddy.character == .hulk { precondition(web.phase == .idle) }
 
             let name = "\(buddy.currentState)"
@@ -212,7 +260,10 @@ struct SimCheck {
         print("wall posture         : \(crawlFrames) crawl frames, \(uprightOnWall) upright-on-wall frames")
         print("blinks               : \(blinks) (peak closure \(String(format: "%.2f", maxBlink)))")
 
+        patrolBeacon.cancel(buddy: buddy)
+        patrolVehicle.cancel(world: world, buddy: buddy)
         var failures: [String] = checkTiming()
+        if buddy.character == .batman { failures += checkLongBatInterval() }
         if unstable { failures.append("simulation went non-finite") }
         if !insideX || !insideY { failures.append("buddy escaped the screen") }
         if !surfacesSeen.contains("floor") { failures.append("never stood on the floor") }

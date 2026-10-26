@@ -44,13 +44,15 @@ preview image. Regenerate the preview if you intend to commit it.
 | `Sources/Scene/Battle.swift` | Fight scheduling, buddy attacks and baddie cleanup |
 | `Sources/Buddy/Villain.swift` | Baddie movement, telegraphs, attacks and damage |
 | `Sources/Buddy/Effects.swift` | Short-lived visual effects |
+| `Sources/Buddy/AutomaticActions.swift` | Fair, shared selection of Bat-Buddy automatic specials |
 | `Sources/Buddy/BatSignal.swift` | Bat-Beacon and swarm lifecycle |
 | `Sources/Buddy/Batmobile.swift` | Buddy-Mobile boarding, driving, wall route and exit lifecycle |
 | `Sources/Support/TimingSettings.swift` | Persisted timing values, defaults and bounds |
 | `Tools/simcheck.swift` | Simulation, interactions, timing, effect and vehicle checks |
 | `Tools/preview.swift` | Software renderer and animation contact-sheet shots |
 
-Each scene frame updates the vehicle, buddy, beacon and battle director. The buddy
+Each scene frame updates the vehicle, buddy, beacon and battle director, then
+runs the shared automatic-action selector. The buddy
 advances its state and physics, selects a target pose, blends towards it, then
 applies it to the rig. Independent effects should follow this explicit frame flow
 when they need reliable pause/cancel behaviour.
@@ -158,8 +160,12 @@ For staged actions use `Pose.timeline([prepare, strike, recover], progress)`, wh
 
 `Buddy.canPerformAutomaticAction` is the shared eligibility/cooldown gate.
 `Buddy.decide` already records non-locomotion choices using its `defer` block.
-External directors such as the beacon and car must check that gate and call
-`buddy.didPerformAutomaticAction()` only after a successful automatic start.
+Bat-Buddy uses `AutomaticActions.swift` as the single owner of automatic specials.
+Add a case to its shuffled action bag and launch the action there. The scene keeps
+the beacon/car directors' independent automatic modes off. Do not add another
+per-frame poller that can claim the cooldown first: it can starve other actions,
+especially at long intervals. Call `buddy.didPerformAutomaticAction()` only after
+a successful automatic start. Other buddies use their model decision paths.
 
 Manual menu commands bypass the automatic cooldown. An interval of zero must stop
 automatic actions without disabling manual commands. Do not change animation

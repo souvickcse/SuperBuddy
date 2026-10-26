@@ -334,7 +334,7 @@ final class Buddy {
     // MARK: Grounded locomotion (walks along whichever edge it is standing on)
 
     private func stepGrounded(_ dt: CGFloat, _ world: World, _ scene: SKScene) {
-        if character != .spider, state == .walk, !inBattle, !pressing {
+        if character != .spider, character != .batman, state == .walk, !inBattle, !pressing {
             walkingSlashIn -= TimeInterval(dt)
             if walkingSlashIn <= 0, canPerformAutomaticAction {
                 didPerformAutomaticAction()
@@ -546,6 +546,11 @@ final class Buddy {
 
     private func decide(_ world: World, _ scene: SKScene) {
         guard !paused, !isGrabbed, !inBattle else { return }
+        if character == .batman {
+            // The shared director chooses specials; ordinary locomotion stays local.
+            enter(chance(0.55) ? .walk : .stand)
+            return
+        }
         guard canPerformAutomaticAction else {
             enter(chance(0.55) ? .walk : .stand)
             return
@@ -560,16 +565,6 @@ final class Buddy {
             else if roll < 0.59 { jump(world) }
             else if roll < 0.7 { enter(.punch) }
             else if roll < 0.8 { dance(scene) }
-            else { enter(.stand) }
-            return
-        }
-        if character == .batman {
-            let roll = randf(0, 1)
-            if roll < 0.3 { enter(.walk) }
-            else if roll < 0.42 { enter(.run) }
-            else if roll < 0.55 { jump(world) }
-            else if roll < 0.65 { webZip(world, scene, toCeiling: true) }
-            else if roll < 0.77 { dance(scene) }
             else { enter(.stand) }
             return
         }

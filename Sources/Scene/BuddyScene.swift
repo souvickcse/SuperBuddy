@@ -9,6 +9,7 @@ final class BuddyScene: SKScene {
     let battle = Battle()
     let batmobile = Batmobile()
     let batSignal = BatSignal()
+    let automaticActions = AutomaticActions()
     var world = World()
 
     private var lastTime: TimeInterval = 0
@@ -49,10 +50,13 @@ final class BuddyScene: SKScene {
         if dt < 0 { dt = 0 }
         if dt > 0.05 { dt = 0.05 }
         buddy.cursor = cursorInScene()
-        batmobile.update(dt: dt, world: world, scene: self, buddy: buddy, automatic: !batSignal.active)
+        batmobile.update(dt: dt, world: world, scene: self, buddy: buddy, automatic: false)
         buddy.update(dt: dt, world: world, scene: self, web: web)
-        batSignal.update(dt: dt, world: world, buddy: buddy, scene: self, automatic: !batmobile.active)
-        if !frozen { battle.update(dt: dt, world: world, scene: self, buddy: buddy) }
+        batSignal.update(dt: dt, world: world, buddy: buddy, scene: self, automatic: false)
+        if !frozen {
+            battle.update(dt: dt, world: world, scene: self, buddy: buddy)
+            automaticActions.update(world: world, scene: self, buddy: buddy, beacon: batSignal, vehicle: batmobile)
+        }
     }
 
     // MARK: Input

@@ -111,9 +111,9 @@ make clean      # remove build artefacts
 `make dist` produces a **universal** (Apple Silicon **and** Intel) Release build and
 wraps it two ways in `dist/`:
 
-* `SuperBuddy-1.1-universal.dmg` — open it, drag the app onto the Applications
+* `SuperBuddy-1.1.1-universal.dmg` — open it, drag the app onto the Applications
   shortcut. Friendliest for other people.
-* `SuperBuddy-1.1-universal-macOS.zip` — the same app, zipped.
+* `SuperBuddy-1.1.1-universal-macOS.zip` — the same app, zipped.
 
 Both include a **How to open Super Buddy.txt** explaining the one thing that always
 trips people up: the app is **ad-hoc signed, not notarised**, because that needs a paid
@@ -251,8 +251,8 @@ opponents after `make check`.
 ## Bat-Beacon and bat camouflage
 
 With Bat-Buddy selected, the **Bat-Beacon** appears automatically at random intervals
-alongside his other actions. Its cooldown counts 20–45 seconds of normal patrol or
-idle time; it waits during pauses, fights, gliding and Buddy-Mobile rides. Automatic
+alongside his other actions. It shares the interval configured in **Settings…**
+with the other specials; it waits during pauses, fights, gliding and Buddy-Mobile rides. Automatic
 Buddy-Mobile rides also wait for the bat swarm to finish. Use **Bat-Beacon** (⌘E) to
 trigger it manually at any time when Bat-Buddy is available. A golden spotlight
 projects the bat emblem into the sky; 42 animated bats fly in, swirl around Bat-Buddy,
@@ -275,3 +275,8 @@ the Bat-Beacon and Buddy-Mobile rides. Walking and idle poses continue normally.
 The next action is chosen randomly when the cooldown and the buddy's current activity
 allow it. Pausing freezes the timers. Saving new values restarts their countdowns;
 changing the villain interval during a fight applies to the next fight.
+
+Bat-Buddy's automatic specials use one shared selector. Leaps, grapples, patrol
+flourishes, Bat-Beacon and Buddy-Mobile rides each get one turn in a shuffled set
+before the set repeats. This preserves variety even with long intervals such as
+200 seconds, without changing animation speed or the saved interval.
